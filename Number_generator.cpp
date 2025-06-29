@@ -1,5 +1,8 @@
 #include "Number_generator.h"
 
+//kod je uzet sa stranice https://www.geeksforgeeks.org/dsa/program-sudoku-generator/
+
+
 // Returns false if given 3x3 block contains num
 // Ensure the number is not used in the box
 bool unUsedInBox(vector<vector<int>>& grid, int rowStart, int colStart, int num) {

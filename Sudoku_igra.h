@@ -3,32 +3,55 @@
 #include <windows.h>
 #include <string>
 
-class number_button
+class sudoku_button
 {
 private:
-	bool is_revealed;
-	int revealed_number;
-	int unrevealed_number;
+    bool is_highlighted = false;
 	HWND hwnd = nullptr;
 	int id;
-	std::string label;
+	string text;
 public:
-    number_button(HWND hw, int x, int y, int width, int height, int controlId, const std::string& text)
-        : id(controlId), label(text)
+    sudoku_button(HWND hw, int x, int y, int w, int h, int controlId, const string& txt)
+        : id(controlId), text(txt)
     {
-        hwnd = CreateWindow("BUTTON", text.c_str(), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, x, y, 70, 70, hw, HMENU(controlId), 0, 0);
+        hwnd = CreateWindow("BUTTON", txt.c_str(), WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX | BS_PUSHLIKE, x, y, 70, 70, hw, HMENU(controlId), 0, 0);
     }
 
-    void SetText(const std::string& text) {
-        label = text;
+    void setText(const string& txt) {
+        text = txt;
         SetWindowText(hwnd, text.c_str());
     }
 
-    bool getIs_reveald() { return is_revealed; }
+    void setHighlighted(bool state) { is_highlighted = state; }
+
+    bool isHighlighted() const { return is_highlighted; }
+
+    string getText() { return text; }
+
+    HWND getHWND() { return hwnd; }
 
     void Enable(bool enable = true) { EnableWindow(hwnd, enable); }
 
     void Show(bool show = true) { ShowWindow(hwnd, show ? SW_SHOW : SW_HIDE); }
+
+};
+
+class number_button
+{
+private:
+    HWND hwnd = nullptr;
+    int id;
+    string label;
+public:
+    number_button(HWND hw, int x, int y, int width, int height, int controlId, const string& text): id(controlId), label(text)
+    {
+        hwnd = CreateWindow("BUTTON", text.c_str(), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+            x, y, 70, 70, hw, HMENU(controlId), 0, 0);
+    }
+
+    string getText() { return label; }
+    
+    HWND getHWND() { return hwnd; }
 
 };
 
