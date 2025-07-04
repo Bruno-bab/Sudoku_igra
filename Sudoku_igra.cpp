@@ -1,13 +1,35 @@
 #include "Number_generator.h"
 #include "Sudoku_igra.h"
 
+vector<vector<int>> solved_sudoku = createSolvedSudoku();
 vector<sudoku_button> sudoku_buttons;
 vector<number_button> number_buttons;
 std::string selected_number = "";
-bool same_numbers = false;
 
 int selected_sudoku_id = -1;
 int selected_number_id = -1;
+
+vector<vector<int>> createSolvedSudoku()
+{
+	srand(time(0));
+	vector<vector<int>> solved_sudoku = sudokuGenerator(0);
+	return solved_sudoku;
+}
+
+void remove_numbers(vector<vector<int>>& grid, int k)
+{
+	int count = 0;
+	while (count < k)
+	{
+		int row = rand() % 9;
+		int col = rand() % 9;
+		if (grid[row][col] != 0)
+		{
+			grid[row][col] = 0;
+			count++;
+		}
+	}
+}
 
 void on_create(HWND hw) 
 {
@@ -17,8 +39,11 @@ void on_create(HWND hw)
 void on_create_game(HWND hw)
 {
 	srand(time(0));
-	int numbers_to_remove = 30;
-	vector<vector<int>> sudoku = sudokuGenerator(numbers_to_remove);
+	int numbers_to_remove = 45;
+
+	vector<vector<int>> unsolved_sudoku = solved_sudoku;
+	remove_numbers(unsolved_sudoku, numbers_to_remove);
+
 	int y = 50;
 	int id = 0;
 	for (int i = 0; i < 9; i++)
@@ -34,8 +59,8 @@ void on_create_game(HWND hw)
 				x += 73;
 			else
 				x += 70;
-			if (sudoku[i][j] != 0)
-				sudoku_buttons.emplace_back(hw, x, y, 70, 70, id, std::to_string(sudoku[i][j]));
+			if (unsolved_sudoku[i][j] != 0)
+				sudoku_buttons.emplace_back(hw, x, y, 70, 70, id, std::to_string(unsolved_sudoku[i][j]));
 			else
 				sudoku_buttons.emplace_back(hw, x, y, 70, 70, id, "");
 			id++;
@@ -55,6 +80,12 @@ void on_create_game(HWND hw)
 			counter++;
 		}
 	}
+
+	CreateWindow("BUTTON", "Delete", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON ,
+		1100, 200, 100, 100, hw, HMENU(110), 0, 0);
+
+	CreateWindow("BUTTON", "Solve", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+		1300, 200, 100, 100, hw, HMENU(110), 0, 0);
 }
 
 void on_paint(HWND hw)
@@ -77,19 +108,20 @@ void on_command(HWND hw, int id)
 		if (selected_sudoku_id != -1)
 			sudoku_buttons[selected_sudoku_id].setClickedButton(false);
 
-		for (int i = 0; i < 81; i++)
-		{
-			sudoku_buttons[i].setSameNumber(false);
-			if (sudoku_buttons[i].getText() == sudoku_buttons[id].getText() && sudoku_buttons[id].getText() != "" && id != i)
-			{
-				sudoku_buttons[i].setSameNumber(true);
-				HWND button = GetDlgItem(hw, sudoku_buttons[i].getId());
-				InvalidateRect(button, 0, true);
-			}
-		}
-
 		selected_sudoku_id = id;
 		sudoku_buttons[selected_sudoku_id].setClickedButton(true);
+
+
+		for (int i = 0; i < 81; i++)
+		{
+			sudoku_buttons[i].setNumberHighlighted(false);
+			if (sudoku_buttons[i].getText() == sudoku_buttons[id].getText() && sudoku_buttons[id].getText() != "" && id != i)
+			{
+				sudoku_buttons[i].setNumberHighlighted(true);
+				HWND button = GetDlgItem(hw, sudoku_buttons[i].getId());
+				InvalidateRect(button, 0, true);
+			}			
+		}
 
 		HWND button = GetDlgItem(hw, sudoku_buttons[selected_sudoku_id].getId());
 		InvalidateRect(button, 0, true);
@@ -105,11 +137,32 @@ void on_command(HWND hw, int id)
 			sudoku_buttons[selected_sudoku_id].setText(val);
 			sudoku_buttons[selected_sudoku_id].setEnteredNumber(true);
 
+			for (int i = 0; i < 81; i++)
+			{
+				sudoku_buttons[i].setNumberHighlighted(false);
+				if (sudoku_buttons[i].getText() == sudoku_buttons[selected_sudoku_id].getText() &&
+					sudoku_buttons[selected_sudoku_id].getText() != "" && selected_sudoku_id != i)
+				{
+					sudoku_buttons[i].setNumberHighlighted(true);
+					HWND button = GetDlgItem(hw, sudoku_buttons[i].getId());
+					InvalidateRect(button, 0, true);
+				}
+			}
+
 			HWND button = GetDlgItem(hw, sudoku_buttons[selected_sudoku_id].getId());
 			InvalidateRect(button, 0, true);
 		}
 	}
 	selected_number_id = -1;
+	
+	if (id == 110)
+	{
+		for (int i = 0; i < 81; i++)
+		{
+			if (sudoku_buttons[i].getClickedButton() && sudoku_buttons[i].getEnteredNumber())
+				sudoku_buttons[i].setText("");
+		}
+	}
 }
 
 void on_drawitem(LPARAM lp)
@@ -129,7 +182,7 @@ void on_drawitem(LPARAM lp)
 			if (sudoku_buttons[i].getClickedButton())
 				button_color = RGB(190, 190, 230);
 
-			if (sudoku_buttons[i].getSameNumber())
+			if (sudoku_buttons[i].getNumberHighlighted())
 				button_color = RGB(220, 220, 235);
 
 			HBRUSH brush = CreateSolidBrush(button_color);
@@ -137,8 +190,11 @@ void on_drawitem(LPARAM lp)
 
 			DrawEdge(dis->hDC, &dis->rcItem, EDGE_RAISED, BF_RECT);
 
-			if (sudoku_buttons[i].getEnteredNumber())
+			if (sudoku_buttons[i].getText() != to_string(solved_sudoku[i / 9][i % 9]))
+				SetTextColor(dis->hDC, RGB(255, 0, 0)); 
+			else if (sudoku_buttons[i].getEnteredNumber())
 				SetTextColor(dis->hDC, RGB(0, 0, 255));
+			
 			SetBkMode(dis->hDC, TRANSPARENT);
 
 			RECT button_text = dis->rcItem;

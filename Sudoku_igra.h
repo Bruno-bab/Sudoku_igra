@@ -8,7 +8,8 @@ class sudoku_button
 private:
     bool entered_number = false;
     bool clicked_button = false;
-    bool same_number = false;
+    bool number_highlighted = false;
+    bool not_same_number = false;
 	HWND hwnd = nullptr;
 	int id;
 	string text;
@@ -37,9 +38,15 @@ public:
         InvalidateRect(hwnd, nullptr, TRUE);
     }
 
-    void setSameNumber(bool sn)
+    void setNumberHighlighted(bool nh)
     {
-        same_number = sn;
+        number_highlighted = nh;
+        InvalidateRect(hwnd, nullptr, TRUE);
+    }
+
+    void setNotSameNumber(bool sn)
+    {
+        not_same_number = sn;
         InvalidateRect(hwnd, nullptr, TRUE);
     }
 
@@ -47,7 +54,9 @@ public:
 
     bool getClickedButton() const { return clicked_button; }
 
-    bool getSameNumber() const { return same_number; }
+    bool getNumberHighlighted() const { return number_highlighted; }
+
+    bool getNotSameNumber() const { return not_same_number; }
 
     string getText() { return text; }
 
@@ -75,4 +84,8 @@ public:
     HWND getHWND() { return hwnd; }
 
 };
+
+vector<vector<int>> createSolvedSudoku();
+
+void remove_numbers(vector<vector<int>>& grid, int k);
 
