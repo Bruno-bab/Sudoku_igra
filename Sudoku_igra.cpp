@@ -8,6 +8,7 @@ std::string selected_number = "";
 
 int selected_sudoku_id = -1;
 int selected_number_id = -1;
+int mistakes = 0;
 
 vector<vector<int>> createSolvedSudoku()
 {
@@ -60,7 +61,7 @@ void on_create_game(HWND hw)
 			else
 				x += 70;
 			if (unsolved_sudoku[i][j] != 0)
-				sudoku_buttons.emplace_back(hw, x, y, 70, 70, id, std::to_string(unsolved_sudoku[i][j]));
+				sudoku_buttons.emplace_back(hw, x, y, 70, 70, id, to_string(unsolved_sudoku[i][j]));
 			else
 				sudoku_buttons.emplace_back(hw, x, y, 70, 70, id, "");
 			id++;
@@ -75,7 +76,7 @@ void on_create_game(HWND hw)
 		y2 += 73;
 		for (int j = 0; j < 3; j++)
 		{
-			number_buttons.emplace_back(hw, x2, y2, 70, 70, 100 + counter, std::to_string(counter));
+			number_buttons.emplace_back(hw, x2, y2, 70, 70, 100 + counter, to_string(counter));
 			x2 += 73;
 			counter++;
 		}
@@ -85,7 +86,15 @@ void on_create_game(HWND hw)
 		1100, 200, 100, 100, hw, HMENU(110), 0, 0);
 
 	CreateWindow("BUTTON", "Solve", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-		1300, 200, 100, 100, hw, HMENU(110), 0, 0);
+		1300, 200, 100, 100, hw, HMENU(111), 0, 0);
+
+    HWND hwndStatic = CreateWindow("STATIC", ("Number of mistakes: 0/3"), WS_CHILD | WS_VISIBLE | SS_LEFT,
+       1100, 100, 255, 50, hw, HMENU(112), 0, 0);
+
+	HFONT hFont = CreateFont( -20, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
+		OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, TEXT("Consolas")
+	);
+	SendMessage(hwndStatic, WM_SETFONT, (WPARAM)hFont, TRUE);
 }
 
 void on_paint(HWND hw)
@@ -133,8 +142,8 @@ void on_command(HWND hw, int id)
 
 		if (selected_sudoku_id != -1 && sudoku_buttons[selected_sudoku_id].getText() == "")
 		{
-			std::string val = number_buttons[selected_number_id - 101].getText();
-			sudoku_buttons[selected_sudoku_id].setText(val);
+			string number = number_buttons[selected_number_id - 101].getText();
+			sudoku_buttons[selected_sudoku_id].setText(number);
 			sudoku_buttons[selected_sudoku_id].setEnteredNumber(true);
 
 			for (int i = 0; i < 81; i++)
@@ -151,6 +160,19 @@ void on_command(HWND hw, int id)
 
 			HWND button = GetDlgItem(hw, sudoku_buttons[selected_sudoku_id].getId());
 			InvalidateRect(button, 0, true);
+
+			if (sudoku_buttons[selected_sudoku_id].getText() !=
+				to_string(solved_sudoku[selected_sudoku_id / 9][selected_sudoku_id % 9]) &&
+				sudoku_buttons[selected_sudoku_id].getText() != "")
+			{
+				mistakes++;
+				HWND hStatic = GetDlgItem(hw, 112);
+				string stext = "Number of mistakes: " + to_string(mistakes) + "/3";
+				SetWindowText(hStatic, stext.c_str());
+
+				InvalidateRect(hStatic, NULL, TRUE);
+				UpdateWindow(hStatic);
+			}
 		}
 	}
 	selected_number_id = -1;
@@ -159,8 +181,32 @@ void on_command(HWND hw, int id)
 	{
 		for (int i = 0; i < 81; i++)
 		{
+			sudoku_buttons[i].setNumberHighlighted(false);
 			if (sudoku_buttons[i].getClickedButton() && sudoku_buttons[i].getEnteredNumber())
 				sudoku_buttons[i].setText("");
+		}
+	}
+
+	if (id == 111)
+	{
+		for (int i = 0; i < 81; i++)
+		{
+			sudoku_buttons[i].setNumberHighlighted(false);
+			if (sudoku_buttons[i].getText() == sudoku_buttons[selected_sudoku_id].getText() &&
+				sudoku_buttons[selected_sudoku_id].getText() != "" && selected_sudoku_id != i)
+			{
+				sudoku_buttons[i].setNumberHighlighted(true);
+				HWND button = GetDlgItem(hw, sudoku_buttons[i].getId());
+				InvalidateRect(button, 0, true);
+			}
+
+			if (sudoku_buttons[i].getClickedButton() && sudoku_buttons[i].getText() == "")
+			{
+				string solved_number = to_string(solved_sudoku[i / 9][i % 9]);
+				sudoku_buttons[i].setText(solved_number);
+				sudoku_buttons[i].setEnteredNumber(true);
+			}
+
 		}
 	}
 }
@@ -191,7 +237,8 @@ void on_drawitem(LPARAM lp)
 			DrawEdge(dis->hDC, &dis->rcItem, EDGE_RAISED, BF_RECT);
 
 			if (sudoku_buttons[i].getText() != to_string(solved_sudoku[i / 9][i % 9]))
-				SetTextColor(dis->hDC, RGB(255, 0, 0)); 
+				SetTextColor(dis->hDC, RGB(255, 0, 0));
+			
 			else if (sudoku_buttons[i].getEnteredNumber())
 				SetTextColor(dis->hDC, RGB(0, 0, 255));
 			
