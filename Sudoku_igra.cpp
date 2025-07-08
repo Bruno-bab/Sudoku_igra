@@ -10,6 +10,12 @@ int selected_sudoku_id = -1;
 int selected_number_id = -1;
 int mistakes = 0;
 
+const auto class_name2 = "Mode";
+bool rect_drawn = false;
+
+HFONT button_font = CreateFont(-30, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
+	OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, TEXT("Times New Roman"));
+
 vector<vector<int>> createSolvedSudoku()
 {
 	srand(time(0));
@@ -32,15 +38,44 @@ void remove_numbers(vector<vector<int>>& grid, int k)
 	}
 }
 
-void on_create(HWND hw) 
+void on_create(HWND hw)
 {
+	RECT r;
+	GetClientRect(hw, &r);
+	int x = (r.left + r.right) / 2 - 75;
+	
+	HWND e_button = CreateWindow(TEXT("BUTTON"), TEXT("Easy"),
+		WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+		x, 150, 150, 100,
+		hw, (HMENU)200, 0, 0);
 
+	SendMessage(e_button, WM_SETFONT, (WPARAM)button_font, true);
+
+	HWND n_button = CreateWindow(TEXT("BUTTON"), TEXT("Normal"),
+		WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+		x, 300, 150, 100,
+		hw, (HMENU)201, 0, 0);
+
+	SendMessage(n_button, WM_SETFONT, (WPARAM)button_font, true);
+
+	HWND h_button = CreateWindow(TEXT("BUTTON"), TEXT("Hard"),
+		WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+		x, 450, 150, 100,
+		hw, (HMENU)202, 0, 0);
+
+	SendMessage(h_button, WM_SETFONT, (WPARAM)button_font, true);
 }
 
-void on_create_game(HWND hw)
+void game_start(HWND hw, int mode)
 {
 	srand(time(0));
-	int numbers_to_remove = 45;
+	int numbers_to_remove;
+	if (mode == 0)
+		numbers_to_remove = rand() % 10 + 25; 
+	else if (mode == 1)
+		numbers_to_remove = rand() % 10 + 35; 
+	else if (mode == 2)
+		numbers_to_remove = rand() % 10 + 45; 
 
 	vector<vector<int>> unsolved_sudoku = solved_sudoku;
 	remove_numbers(unsolved_sudoku, numbers_to_remove);
@@ -82,32 +117,40 @@ void on_create_game(HWND hw)
 		}
 	}
 
-	CreateWindow("BUTTON", "Delete", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON ,
+	HWND d_button = CreateWindow("BUTTON", "Delete", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON ,
 		1100, 200, 100, 100, hw, HMENU(110), 0, 0);
 
-	CreateWindow("BUTTON", "Solve", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+	SendMessage(d_button, WM_SETFONT, (WPARAM)button_font, true);
+
+	HWND s_button = CreateWindow("BUTTON", "Solve", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
 		1300, 200, 100, 100, hw, HMENU(111), 0, 0);
 
-    HWND hwndStatic = CreateWindow("STATIC", ("Number of mistakes: 0/3"), WS_CHILD | WS_VISIBLE | SS_LEFT,
-       1100, 100, 255, 50, hw, HMENU(112), 0, 0);
+	SendMessage(s_button, WM_SETFONT, (WPARAM)button_font, true);
 
-	HFONT hFont = CreateFont( -20, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
-		OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, TEXT("Consolas")
+    HWND mistakes_text = CreateWindow("STATIC", ("Number of mistakes: 0/3"), WS_CHILD | WS_VISIBLE | SS_LEFT,
+       1100, 100, 245, 25, hw, HMENU(112), 0, 0);
+
+	HFONT static_font = CreateFont( -20, -10, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
+		OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, TEXT("Times New Roman")
 	);
-	SendMessage(hwndStatic, WM_SETFONT, (WPARAM)hFont, TRUE);
+	SendMessage(mistakes_text, WM_SETFONT, (WPARAM)static_font, true);
 }
 
 void on_paint(HWND hw)
 {
 	PAINTSTRUCT ps;
 	HDC hdc = BeginPaint(hw, &ps);
-	HBRUSH brush = CreateSolidBrush(RGB(0, 0, 0));
-	RECT r = { 318, 118, 963, 763 };
-	FillRect(hdc, &r, brush);
 
-	DeleteObject(brush);
+	if (rect_drawn)
+	{
+		HBRUSH brush = CreateSolidBrush(RGB(0, 0, 0));
+		RECT r = { 318, 118, 963, 763 };
+		FillRect(hdc, &r, brush);
 
-	EndPaint(hw, &ps);
+		DeleteObject(brush);
+
+		EndPaint(hw, &ps);
+	}
 }
 
 void on_command(HWND hw, int id)
@@ -170,7 +213,7 @@ void on_command(HWND hw, int id)
 				string stext = "Number of mistakes: " + to_string(mistakes) + "/3";
 				SetWindowText(hStatic, stext.c_str());
 
-				InvalidateRect(hStatic, NULL, TRUE);
+				InvalidateRect(hStatic, 0, true);
 				UpdateWindow(hStatic);
 			}
 		}
@@ -192,7 +235,7 @@ void on_command(HWND hw, int id)
 		for (int i = 0; i < 81; i++)
 		{
 			sudoku_buttons[i].setNumberHighlighted(false);
-			if (sudoku_buttons[i].getText() == sudoku_buttons[selected_sudoku_id].getText() &&
+			if (sudoku_buttons[i].getClickedButton() && sudoku_buttons[i].getText() == sudoku_buttons[selected_sudoku_id].getText() &&
 				sudoku_buttons[selected_sudoku_id].getText() != "" && selected_sudoku_id != i)
 			{
 				sudoku_buttons[i].setNumberHighlighted(true);
@@ -208,6 +251,42 @@ void on_command(HWND hw, int id)
 			}
 
 		}
+	}
+
+	HWND e_button = GetDlgItem(hw, 200);
+	HWND n_button = GetDlgItem(hw, 201);
+	HWND h_button = GetDlgItem(hw, 202);
+
+	if (id == 200) 
+	{
+		rect_drawn = true;
+		InvalidateRect(hw, 0, true); 
+		game_start(hw, 0);
+
+		ShowWindow(e_button, SW_HIDE);
+		ShowWindow(n_button, SW_HIDE);
+		ShowWindow(h_button, SW_HIDE);
+
+	}
+	if (id == 201) 
+	{
+		rect_drawn = true;
+		InvalidateRect(hw, 0, true);
+		game_start(hw, 1);
+
+		ShowWindow(e_button, SW_HIDE);
+		ShowWindow(n_button, SW_HIDE);
+		ShowWindow(h_button, SW_HIDE);
+	}
+	if (id == 202) 
+	{
+		rect_drawn = true; 
+		InvalidateRect(hw, 0, true);
+		game_start(hw, 2);
+
+		ShowWindow(e_button, SW_HIDE);
+		ShowWindow(n_button, SW_HIDE);
+		ShowWindow(h_button, SW_HIDE);
 	}
 }
 
@@ -265,7 +344,7 @@ LRESULT CALLBACK window_proc(HWND hw, UINT msg, WPARAM wp, LPARAM lp)
 	switch (msg)
 	{
 		case WM_CREATE:
-			on_create_game(hw);
+			on_create(hw);
 			return 0;
 		case WM_PAINT:
 			on_paint(hw);
@@ -298,11 +377,13 @@ int register_class(HINSTANCE hi, const char* name)
 
 int WINAPI WinMain(HINSTANCE hi, HINSTANCE, LPSTR cmd_line, int show_flag)
 {
-	const auto class_name = "Sudoku";
-	if (!register_class(hi, class_name))
+	const auto class_name1 = "TheGame";
+	if (!register_class(hi, class_name1) || !register_class(hi, class_name2))
 		return 0;
-	::CreateWindow(class_name, "Sudoku", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, 0, 0, hi, 0);
+	int screen_w = GetSystemMetrics(SM_CXSCREEN);
+	int screen_h = GetSystemMetrics(SM_CYSCREEN);
+	::CreateWindow(class_name1, "Sudoku", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+		CW_USEDEFAULT, CW_USEDEFAULT, screen_w, screen_h, 0, 0, hi, 0);
 	MSG msg;
 	while (::GetMessage(&msg, 0, 0, 0))
 		::DispatchMessage(&msg);

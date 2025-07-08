@@ -89,3 +89,5 @@ vector<vector<int>> createSolvedSudoku();
 
 void remove_numbers(vector<vector<int>>& grid, int k);
 
+void game_start(HWND hw, int mode);
+
