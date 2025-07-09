@@ -1,7 +1,7 @@
 #include "Number_generator.h"
 #include "Sudoku_igra.h"
 
-vector<vector<int>> solved_sudoku = createSolvedSudoku();
+vector<vector<int>> solved_sudoku;
 vector<sudoku_button> sudoku_buttons;
 vector<number_button> number_buttons;
 std::string selected_number = "";
@@ -9,6 +9,10 @@ std::string selected_number = "";
 int selected_sudoku_id = -1;
 int selected_number_id = -1;
 int mistakes = 0;
+
+HWND e_button;
+HWND n_button;
+HWND h_button;
 
 const auto class_name2 = "Mode";
 bool rect_drawn = false;
@@ -44,21 +48,21 @@ void on_create(HWND hw)
 	GetClientRect(hw, &r);
 	int x = (r.left + r.right) / 2 - 75;
 	
-	HWND e_button = CreateWindow(TEXT("BUTTON"), TEXT("Easy"),
+	e_button = CreateWindow(TEXT("BUTTON"), TEXT("Easy"),
 		WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
 		x, 150, 150, 100,
 		hw, (HMENU)200, 0, 0);
 
 	SendMessage(e_button, WM_SETFONT, (WPARAM)button_font, true);
 
-	HWND n_button = CreateWindow(TEXT("BUTTON"), TEXT("Normal"),
+	n_button = CreateWindow(TEXT("BUTTON"), TEXT("Normal"),
 		WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
 		x, 300, 150, 100,
 		hw, (HMENU)201, 0, 0);
 
 	SendMessage(n_button, WM_SETFONT, (WPARAM)button_font, true);
 
-	HWND h_button = CreateWindow(TEXT("BUTTON"), TEXT("Hard"),
+	h_button = CreateWindow(TEXT("BUTTON"), TEXT("Hard"),
 		WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
 		x, 450, 150, 100,
 		hw, (HMENU)202, 0, 0);
@@ -69,13 +73,16 @@ void on_create(HWND hw)
 void game_start(HWND hw, int mode)
 {
 	srand(time(0));
+
 	int numbers_to_remove;
 	if (mode == 0)
-		numbers_to_remove = rand() % 10 + 25; 
+		numbers_to_remove = 1;//rand() % 10 + 25; 
 	else if (mode == 1)
 		numbers_to_remove = rand() % 10 + 35; 
 	else if (mode == 2)
-		numbers_to_remove = rand() % 10 + 45; 
+		numbers_to_remove = rand() % 10 + 45;
+
+	solved_sudoku = createSolvedSudoku();
 
 	vector<vector<int>> unsolved_sudoku = solved_sudoku;
 	remove_numbers(unsolved_sudoku, numbers_to_remove);
@@ -134,6 +141,33 @@ void game_start(HWND hw, int mode)
 		OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, TEXT("Times New Roman")
 	);
 	SendMessage(mistakes_text, WM_SETFONT, (WPARAM)static_font, true);
+}
+
+void reset_game(HWND hw)
+{
+	for (int i = 0; i < 81; i++)
+		DestroyWindow(GetDlgItem(hw, sudoku_buttons[i].getId()));
+	
+	sudoku_buttons.clear();
+
+	for (int i = 0; i < 9; i++)
+		DestroyWindow(GetDlgItem(hw, number_buttons[i].getId()));
+
+	number_buttons.clear();
+
+	DestroyWindow(GetDlgItem(hw, 110));
+	DestroyWindow(GetDlgItem(hw, 111));
+	DestroyWindow(GetDlgItem(hw, 112));
+
+	mistakes = 0;
+	rect_drawn = false;
+
+	ShowWindow(e_button, SW_SHOW);
+	ShowWindow(n_button, SW_SHOW);
+	ShowWindow(h_button, SW_SHOW);
+
+	InvalidateRect(hw, nullptr, TRUE);
+	UpdateWindow(hw);
 }
 
 void on_paint(HWND hw)
@@ -215,6 +249,30 @@ void on_command(HWND hw, int id)
 
 				InvalidateRect(hStatic, 0, true);
 				UpdateWindow(hStatic);
+
+				if (mistakes >= 3)
+				{
+					if (MessageBox(hw, "Game Over! You have made 3 mistakes. Play again?", "Game over", MB_YESNO | MB_ICONERROR) == IDYES)
+						reset_game(hw);
+					else
+						::PostQuitMessage(0);
+				}
+			}
+
+			int correct_counter = 0;
+
+			for (int i = 0; i < 81; i++)
+			{
+				if (to_string(solved_sudoku[i / 9][i % 9]) == sudoku_buttons[i].getText())
+					correct_counter++;
+			}
+
+			if (correct_counter == 81)
+			{
+				if (MessageBox(hw, "Sudoku solved! Play again?", "You win", MB_YESNO | MB_ICONINFORMATION) == IDYES)
+					reset_game(hw);
+				else
+					::PostQuitMessage(0);
 			}
 		}
 	}
@@ -232,6 +290,8 @@ void on_command(HWND hw, int id)
 
 	if (id == 111)
 	{
+		int correct_counter = 0;
+
 		for (int i = 0; i < 81; i++)
 		{
 			sudoku_buttons[i].setNumberHighlighted(false);
@@ -250,6 +310,15 @@ void on_command(HWND hw, int id)
 				sudoku_buttons[i].setEnteredNumber(true);
 			}
 
+			if (to_string(solved_sudoku[i / 9][i % 9]) == sudoku_buttons[i].getText())
+				correct_counter++;
+		}
+		if (correct_counter == 81)
+		{
+			if (MessageBox(hw, "Sudoku solved! Play again?", "You win", MB_YESNO | MB_ICONINFORMATION) == IDYES)
+				reset_game(hw);
+			else
+				::PostQuitMessage(0);
 		}
 	}
 

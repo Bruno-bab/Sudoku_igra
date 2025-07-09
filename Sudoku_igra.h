@@ -58,9 +58,9 @@ public:
 
     bool getNotSameNumber() const { return not_same_number; }
 
-    string getText() { return text; }
+    string getText() const { return text; }
 
-    HWND getHWND() { return hwnd; }
+    HWND getHWND() const { return hwnd; }
 
     int getId() const { return id; }
 
@@ -79,10 +79,11 @@ public:
             x, y, 70, 70, hw, HMENU(ID), 0, 0);
     }
 
-    string getText() { return text; }
+    string getText() const { return text; }
     
-    HWND getHWND() { return hwnd; }
+    HWND getHWND() const { return hwnd; }
 
+    int getId() const { return id; }
 };
 
 vector<vector<int>> createSolvedSudoku();
@@ -90,4 +91,6 @@ vector<vector<int>> createSolvedSudoku();
 void remove_numbers(vector<vector<int>>& grid, int k);
 
 void game_start(HWND hw, int mode);
+
+void reset_game(HWND hw);
 
