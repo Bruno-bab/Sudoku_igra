@@ -9,6 +9,7 @@ std::string selected_number = "";
 int selected_sudoku_id = -1;
 int selected_number_id = -1;
 int mistakes = 0;
+bool notes_on = false;
 
 HWND e_button;
 HWND n_button;
@@ -18,6 +19,9 @@ const auto class_name2 = "Mode";
 bool rect_drawn = false;
 
 HFONT button_font = CreateFont(-30, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
+	OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, TEXT("Times New Roman"));
+
+HFONT notes_font = CreateFont(14, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
 	OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, TEXT("Times New Roman"));
 
 vector<vector<int>> createSolvedSudoku()
@@ -44,6 +48,8 @@ void remove_numbers(vector<vector<int>>& grid, int k)
 
 void on_create(HWND hw)
 {
+	ShowWindow(hw, SW_MAXIMIZE);
+
 	RECT r;
 	GetClientRect(hw, &r);
 	int x = (r.left + r.right) / 2 - 75;
@@ -76,11 +82,11 @@ void game_start(HWND hw, int mode)
 
 	int numbers_to_remove;
 	if (mode == 0)
-		numbers_to_remove = 1;//rand() % 10 + 25; 
+		numbers_to_remove = rand() % 10 + 26; 
 	else if (mode == 1)
-		numbers_to_remove = rand() % 10 + 35; 
+		numbers_to_remove = rand() % 10 + 37; 
 	else if (mode == 2)
-		numbers_to_remove = rand() % 10 + 45;
+		numbers_to_remove = rand() % 10 + 48;
 
 	solved_sudoku = createSolvedSudoku();
 
@@ -124,23 +130,33 @@ void game_start(HWND hw, int mode)
 		}
 	}
 
-	HWND d_button = CreateWindow("BUTTON", "Delete", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON ,
-		1100, 200, 100, 100, hw, HMENU(110), 0, 0);
+	HWND delete_button = CreateWindow("BUTTON", "Delete", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON ,
+		1050, 200, 100, 100, hw, HMENU(110), 0, 0);
 
-	SendMessage(d_button, WM_SETFONT, (WPARAM)button_font, true);
+	SendMessage(delete_button, WM_SETFONT, (WPARAM)button_font, true);
 
-	HWND s_button = CreateWindow("BUTTON", "Solve", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-		1300, 200, 100, 100, hw, HMENU(111), 0, 0);
+	HWND solve_button = CreateWindow("BUTTON", "Solve", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+		1350, 200, 100, 100, hw, HMENU(111), 0, 0);
 
-	SendMessage(s_button, WM_SETFONT, (WPARAM)button_font, true);
+	SendMessage(solve_button, WM_SETFONT, (WPARAM)button_font, true);
 
     HWND mistakes_text = CreateWindow("STATIC", ("Number of mistakes: 0/3"), WS_CHILD | WS_VISIBLE | SS_LEFT,
-       1100, 100, 245, 25, hw, HMENU(112), 0, 0);
+       1060, 100, 371, 30, hw, HMENU(112), 0, 0);
 
-	HFONT static_font = CreateFont( -20, -10, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
+	HFONT static_font = CreateFont( -25, -15, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
 		OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, TEXT("Times New Roman")
 	);
 	SendMessage(mistakes_text, WM_SETFONT, (WPARAM)static_font, true);
+
+	HWND reset_button = CreateWindow("BUTTON", "New game", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+		100, 250, 150, 100, hw, HMENU(113), 0, 0);
+
+	SendMessage(reset_button, WM_SETFONT, (WPARAM)button_font, true);
+
+	HWND notes_button = CreateWindow("BUTTON", "Notes: OFF", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+		1175, 200, 150, 100, hw, HMENU(114), 0, 0);
+
+	SendMessage(notes_button, WM_SETFONT, (WPARAM)button_font, true);
 }
 
 void reset_game(HWND hw)
@@ -158,6 +174,8 @@ void reset_game(HWND hw)
 	DestroyWindow(GetDlgItem(hw, 110));
 	DestroyWindow(GetDlgItem(hw, 111));
 	DestroyWindow(GetDlgItem(hw, 112));
+	DestroyWindow(GetDlgItem(hw, 113));
+	DestroyWindow(GetDlgItem(hw, 114));
 
 	mistakes = 0;
 	rect_drawn = false;
@@ -216,63 +234,89 @@ void on_command(HWND hw, int id)
 	if (id >= 101 && id <= 109)
 	{
 		selected_number_id = id;
-
-		if (selected_sudoku_id != -1 && sudoku_buttons[selected_sudoku_id].getText() == "")
+		if (selected_sudoku_id != -1)
 		{
-			string number = number_buttons[selected_number_id - 101].getText();
-			sudoku_buttons[selected_sudoku_id].setText(number);
-			sudoku_buttons[selected_sudoku_id].setEnteredNumber(true);
-
-			for (int i = 0; i < 81; i++)
+			if (!notes_on)
 			{
-				sudoku_buttons[i].setNumberHighlighted(false);
-				if (sudoku_buttons[i].getText() == sudoku_buttons[selected_sudoku_id].getText() &&
-					sudoku_buttons[selected_sudoku_id].getText() != "" && selected_sudoku_id != i)
+				if (sudoku_buttons[selected_sudoku_id].getText() == "")
 				{
-					sudoku_buttons[i].setNumberHighlighted(true);
-					HWND button = GetDlgItem(hw, sudoku_buttons[i].getId());
+					string number = number_buttons[selected_number_id - 101].getText();
+					sudoku_buttons[selected_sudoku_id].setText(number);
+					sudoku_buttons[selected_sudoku_id].setEnteredNumber(true);
+
+					for (int i = 0; i < 81; i++)
+					{
+						sudoku_buttons[i].setNumberHighlighted(false);
+						if (sudoku_buttons[i].getText() == sudoku_buttons[selected_sudoku_id].getText() &&
+							sudoku_buttons[selected_sudoku_id].getText() != "" && selected_sudoku_id != i)
+						{
+							sudoku_buttons[i].setNumberHighlighted(true);
+							HWND button = GetDlgItem(hw, sudoku_buttons[i].getId());
+							InvalidateRect(button, 0, true);
+						}
+					}
+
+					HWND button = GetDlgItem(hw, sudoku_buttons[selected_sudoku_id].getId());
 					InvalidateRect(button, 0, true);
+
+					if (sudoku_buttons[selected_sudoku_id].getText() !=
+						to_string(solved_sudoku[selected_sudoku_id / 9][selected_sudoku_id % 9]) &&
+						sudoku_buttons[selected_sudoku_id].getText() != "")
+					{
+						mistakes++;
+						HWND hStatic = GetDlgItem(hw, 112);
+						string stext = "Number of mistakes: " + to_string(mistakes) + "/3";
+						SetWindowText(hStatic, stext.c_str());
+
+						InvalidateRect(hStatic, 0, true);
+						UpdateWindow(hStatic);
+
+						if (mistakes >= 3)
+						{
+							if (MessageBox(hw, "Game Over! You have made 3 mistakes. Play again?", "Game over", MB_YESNO | MB_ICONERROR) == IDYES)
+							{
+								reset_game(hw);
+								return;
+							}
+							else
+							{
+								::PostQuitMessage(0);
+								return;
+							}
+						}
+					}
+
+					int correct_counter = 0;
+
+					for (int i = 0; i < 81; i++)
+					{
+						if (to_string(solved_sudoku[i / 9][i % 9]) == sudoku_buttons[i].getText())
+							correct_counter++;
+					}
+
+					if (correct_counter == 81)
+					{
+						if (MessageBox(hw, "Sudoku solved! Play again?", "You win", MB_YESNO | MB_ICONINFORMATION) == IDYES)
+							reset_game(hw);
+						else
+							::PostQuitMessage(0);
+					}
 				}
 			}
-
-			HWND button = GetDlgItem(hw, sudoku_buttons[selected_sudoku_id].getId());
-			InvalidateRect(button, 0, true);
-
-			if (sudoku_buttons[selected_sudoku_id].getText() !=
-				to_string(solved_sudoku[selected_sudoku_id / 9][selected_sudoku_id % 9]) &&
-				sudoku_buttons[selected_sudoku_id].getText() != "")
+			else
 			{
-				mistakes++;
-				HWND hStatic = GetDlgItem(hw, 112);
-				string stext = "Number of mistakes: " + to_string(mistakes) + "/3";
-				SetWindowText(hStatic, stext.c_str());
+				vector<string> note_numbers = sudoku_buttons[selected_sudoku_id].getNoteNumbers();
+				string selected_note_number = number_buttons[selected_number_id - 101].getText();
 
-				InvalidateRect(hStatic, 0, true);
-				UpdateWindow(hStatic);
+				int idx = stoi(selected_note_number) - 1;
+				if (note_numbers[idx] == "")
+					note_numbers[idx] = selected_note_number;
 
-				if (mistakes >= 3)
-				{
-					if (MessageBox(hw, "Game Over! You have made 3 mistakes. Play again?", "Game over", MB_YESNO | MB_ICONERROR) == IDYES)
-						reset_game(hw);
-					else
-						::PostQuitMessage(0);
-				}
-			}
+				sudoku_buttons[selected_sudoku_id].setNoteNumbers(note_numbers);
 
-			int correct_counter = 0;
-
-			for (int i = 0; i < 81; i++)
-			{
-				if (to_string(solved_sudoku[i / 9][i % 9]) == sudoku_buttons[i].getText())
-					correct_counter++;
-			}
-
-			if (correct_counter == 81)
-			{
-				if (MessageBox(hw, "Sudoku solved! Play again?", "You win", MB_YESNO | MB_ICONINFORMATION) == IDYES)
-					reset_game(hw);
-				else
-					::PostQuitMessage(0);
+				sudoku_buttons[selected_sudoku_id].setText(note_numbers[0] + "      " + note_numbers[1] + "      " + note_numbers[2] + "\n\n"
+														+ note_numbers[3] + "      " + note_numbers[4] + "      " + note_numbers[5] + "\n\n"
+														+ note_numbers[6] + "      " + note_numbers[7] + "      " + note_numbers[8]);		
 			}
 		}
 	}
@@ -283,36 +327,55 @@ void on_command(HWND hw, int id)
 		for (int i = 0; i < 81; i++)
 		{
 			sudoku_buttons[i].setNumberHighlighted(false);
+
 			if (sudoku_buttons[i].getClickedButton() && sudoku_buttons[i].getEnteredNumber())
 				sudoku_buttons[i].setText("");
+		
+			if (sudoku_buttons[i].getClickedButton() && sudoku_buttons[i].getText().size() > 1)
+			{
+				vector<string> empty_notes(9, "");
+				sudoku_buttons[i].setNoteNumbers(empty_notes);
+				sudoku_buttons[i].setText("");
+			}
 		}
 	}
 
 	if (id == 111)
 	{
 		int correct_counter = 0;
+		string inserted_value = "";
 
 		for (int i = 0; i < 81; i++)
 		{
 			sudoku_buttons[i].setNumberHighlighted(false);
-			if (sudoku_buttons[i].getClickedButton() && sudoku_buttons[i].getText() == sudoku_buttons[selected_sudoku_id].getText() &&
-				sudoku_buttons[selected_sudoku_id].getText() != "" && selected_sudoku_id != i)
-			{
-				sudoku_buttons[i].setNumberHighlighted(true);
-				HWND button = GetDlgItem(hw, sudoku_buttons[i].getId());
-				InvalidateRect(button, 0, true);
-			}
 
 			if (sudoku_buttons[i].getClickedButton() && sudoku_buttons[i].getText() == "")
 			{
-				string solved_number = to_string(solved_sudoku[i / 9][i % 9]);
-				sudoku_buttons[i].setText(solved_number);
+				inserted_value = to_string(solved_sudoku[i / 9][i % 9]);
+				sudoku_buttons[i].setText(inserted_value);
 				sudoku_buttons[i].setEnteredNumber(true);
 			}
+		}
 
+		if (!inserted_value.empty())
+		{
+			for (int i = 0; i < 81; i++)
+			{
+				if (sudoku_buttons[i].getText() == inserted_value && !sudoku_buttons[i].getClickedButton())
+				{
+					sudoku_buttons[i].setNumberHighlighted(true);
+					HWND button = GetDlgItem(hw, sudoku_buttons[i].getId());
+					InvalidateRect(button, 0, true);
+				}
+			}
+		}
+
+		for (int i = 0; i < 81; i++)
+		{
 			if (to_string(solved_sudoku[i / 9][i % 9]) == sudoku_buttons[i].getText())
 				correct_counter++;
 		}
+
 		if (correct_counter == 81)
 		{
 			if (MessageBox(hw, "Sudoku solved! Play again?", "You win", MB_YESNO | MB_ICONINFORMATION) == IDYES)
@@ -322,6 +385,22 @@ void on_command(HWND hw, int id)
 		}
 	}
 
+	if (id == 113)
+	{
+		if (MessageBox(hw, "Are you sure you want to start a new game?", "New game", MB_YESNO | MB_ICONINFORMATION) == IDYES)
+			reset_game(hw);
+	}
+
+	if (id == 114)
+	{
+		notes_on = !notes_on;
+
+		if (notes_on)
+			SetWindowText(GetDlgItem(hw, 114), "Notes: ON");
+		else
+			SetWindowText(GetDlgItem(hw, 114), "Notes: OFF");
+	}
+	 
 	HWND e_button = GetDlgItem(hw, 200);
 	HWND n_button = GetDlgItem(hw, 201);
 	HWND h_button = GetDlgItem(hw, 202);
@@ -384,20 +463,35 @@ void on_drawitem(LPARAM lp)
 
 			DrawEdge(dis->hDC, &dis->rcItem, EDGE_RAISED, BF_RECT);
 
-			if (sudoku_buttons[i].getText() != to_string(solved_sudoku[i / 9][i % 9]))
-				SetTextColor(dis->hDC, RGB(255, 0, 0));
-			
-			else if (sudoku_buttons[i].getEnteredNumber())
-				SetTextColor(dis->hDC, RGB(0, 0, 255));
-			
 			SetBkMode(dis->hDC, TRANSPARENT);
 
-			RECT button_text = dis->rcItem;
-			if (isPressed)
-				OffsetRect(&button_text, 1, 1);
+			if (sudoku_buttons[i].getText().size() == 1)
+			{
+				HFONT font1 = (HFONT)SelectObject(dis->hDC, button_font);
 
-			DrawText(dis->hDC, sudoku_buttons[i].getText().c_str(), -1, &button_text,
-				DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+				if (sudoku_buttons[i].getText() != to_string(solved_sudoku[i / 9][i % 9]))
+					SetTextColor(dis->hDC, RGB(255, 0, 0));
+
+				else if (sudoku_buttons[i].getEnteredNumber())
+					SetTextColor(dis->hDC, RGB(0, 0, 255));
+			}
+			else
+				HFONT font2 = (HFONT)SelectObject(dis->hDC, notes_font);
+
+			string text = sudoku_buttons[i].getText();
+			RECT r_text = dis->rcItem;
+
+			RECT measure = r_text;
+			DrawText(dis->hDC, text.c_str(), -1, &measure, DT_CENTER | DT_WORDBREAK | DT_CALCRECT | DT_NOPREFIX);
+
+			int text_height = measure.bottom - measure.top;
+			int c_height = r_text.bottom - r_text.top;
+			int vertical = (c_height - text_height) / 2;
+
+			r_text.top += vertical;
+
+			DrawText(dis->hDC, text.c_str(), -1, &r_text, DT_CENTER | DT_WORDBREAK | DT_NOPREFIX);
+
 			DeleteObject(brush);
 		}
 	}

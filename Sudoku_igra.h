@@ -13,41 +13,50 @@ private:
 	HWND hwnd = nullptr;
 	int id;
 	string text;
+    vector<string> note_numbers;
 public:
     sudoku_button(HWND hw, int x, int y, int w, int h, int ID, const string& txt): id(ID), text(txt)
     {
         hwnd = CreateWindow("BUTTON", "", WS_CHILD | WS_VISIBLE | BS_OWNERDRAW,
             x, y, 70, 70, hw, HMENU(ID), 0, 0);
+
+        note_numbers = std::vector<std::string>(9, "");
     }
 
     void setText(const string& txt)
     {
         text = txt;
-        InvalidateRect(hwnd, nullptr, TRUE);
+        InvalidateRect(hwnd, 0, true);
     }
 
     void setEnteredNumber(bool en)
     {
         entered_number = en;
-        InvalidateRect(hwnd, nullptr, TRUE);
+        InvalidateRect(hwnd, 0, true);
     }
 
     void setClickedButton(bool cb)
     {
         clicked_button = cb;
-        InvalidateRect(hwnd, nullptr, TRUE);
+        InvalidateRect(hwnd, 0, true);
     }
 
     void setNumberHighlighted(bool nh)
     {
         number_highlighted = nh;
-        InvalidateRect(hwnd, nullptr, TRUE);
+        InvalidateRect(hwnd, 0, true);
     }
 
     void setNotSameNumber(bool sn)
     {
         not_same_number = sn;
-        InvalidateRect(hwnd, nullptr, TRUE);
+        InvalidateRect(hwnd, 0, true);
+    }
+
+    void setNoteNumbers (vector<string> nn)
+    {
+        note_numbers = nn;
+        InvalidateRect(hwnd, 0, true);
     }
 
     bool getEnteredNumber() const { return entered_number; }
@@ -64,6 +73,7 @@ public:
 
     int getId() const { return id; }
 
+    vector<string> getNoteNumbers() const { return note_numbers; }
 };
 
 class number_button
