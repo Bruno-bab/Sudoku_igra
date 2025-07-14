@@ -9,8 +9,7 @@ private:
     bool entered_number = false;
     bool clicked_button = false;
     bool number_highlighted = false;
-    bool not_same_number = false;
-	HWND hwnd = nullptr;
+	HWND hwnd;
 	int id;
 	string text;
     vector<string> note_numbers;
@@ -47,29 +46,19 @@ public:
         InvalidateRect(hwnd, 0, true);
     }
 
-    void setNotSameNumber(bool sn)
-    {
-        not_same_number = sn;
-        InvalidateRect(hwnd, 0, true);
-    }
-
     void setNoteNumbers (vector<string> nn)
     {
         note_numbers = nn;
         InvalidateRect(hwnd, 0, true);
     }
 
+    string getText() const { return text; }
+
     bool getEnteredNumber() const { return entered_number; }
 
     bool getClickedButton() const { return clicked_button; }
 
     bool getNumberHighlighted() const { return number_highlighted; }
-
-    bool getNotSameNumber() const { return not_same_number; }
-
-    string getText() const { return text; }
-
-    HWND getHWND() const { return hwnd; }
 
     int getId() const { return id; }
 
@@ -79,7 +68,7 @@ public:
 class number_button
 {
 private:
-    HWND hwnd = nullptr;
+    HWND hwnd;
     int id;
     string text;
 public:
@@ -91,8 +80,6 @@ public:
 
     string getText() const { return text; }
     
-    HWND getHWND() const { return hwnd; }
-
     int getId() const { return id; }
 };
 

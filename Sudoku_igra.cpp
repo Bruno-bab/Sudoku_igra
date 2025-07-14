@@ -4,19 +4,16 @@
 vector<vector<int>> solved_sudoku;
 vector<sudoku_button> sudoku_buttons;
 vector<number_button> number_buttons;
-std::string selected_number = "";
 
 int selected_sudoku_id = -1;
 int selected_number_id = -1;
 int mistakes = 0;
 bool notes_on = false;
+bool rect_drawn = false;
 
 HWND e_button;
 HWND n_button;
 HWND h_button;
-
-const auto class_name2 = "Mode";
-bool rect_drawn = false;
 
 HFONT button_font = CreateFont(-30, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
 	OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, TEXT("Times New Roman"));
@@ -24,13 +21,14 @@ HFONT button_font = CreateFont(-30, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANS
 HFONT notes_font = CreateFont(14, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
 	OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, TEXT("Times New Roman"));
 
+//generira rijesenu sudoku igru
 vector<vector<int>> createSolvedSudoku()
 {
 	srand(time(0));
 	vector<vector<int>> solved_sudoku = sudokuGenerator(0);
 	return solved_sudoku;
 }
-
+//uklanja k brojeva iz sudoku igre
 void remove_numbers(vector<vector<int>>& grid, int k)
 {
 	int count = 0;
@@ -79,21 +77,21 @@ void on_create(HWND hw)
 void game_start(HWND hw, int mode)
 {
 	srand(time(0));
-
+	//uklanja onoliko brojeva iz sudoku igre ovisno o odabranoj težini
 	int numbers_to_remove;
 	if (mode == 0)
-		numbers_to_remove = rand() % 10 + 26; 
+		numbers_to_remove = rand() % 10 + 29; 
 	else if (mode == 1)
-		numbers_to_remove = rand() % 10 + 37; 
+		numbers_to_remove = rand() % 10 + 40; 
 	else if (mode == 2)
-		numbers_to_remove = rand() % 10 + 48;
+		numbers_to_remove = rand() % 10 + 51;
 
 	solved_sudoku = createSolvedSudoku();
 
 	vector<vector<int>> unsolved_sudoku = solved_sudoku;
 	remove_numbers(unsolved_sudoku, numbers_to_remove);
-
-	int y = 50;
+	//kreiranje sudoku gumba
+	int y = 10;
 	int id = 0;
 	for (int i = 0; i < 9; i++)
 	{
@@ -115,12 +113,12 @@ void game_start(HWND hw, int mode)
 			id++;
 		}
 	}
-
+	//kreiranje gumba za brojeve
 	int y2 = 270;
 	int counter = 1;
 	for (int i = 0; i < 3; i++)
 	{
-		int x2 = 1100;
+		int x2 = 1140;
 		y2 += 73;
 		for (int j = 0; j < 3; j++)
 		{
@@ -129,7 +127,7 @@ void game_start(HWND hw, int mode)
 			counter++;
 		}
 	}
-
+	//kreiranje ostalih gumba i statica
 	HWND delete_button = CreateWindow("BUTTON", "Delete", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON ,
 		1050, 200, 100, 100, hw, HMENU(110), 0, 0);
 
@@ -140,16 +138,8 @@ void game_start(HWND hw, int mode)
 
 	SendMessage(solve_button, WM_SETFONT, (WPARAM)button_font, true);
 
-    HWND mistakes_text = CreateWindow("STATIC", ("Number of mistakes: 0/3"), WS_CHILD | WS_VISIBLE | SS_LEFT,
-       1060, 100, 371, 30, hw, HMENU(112), 0, 0);
-
-	HFONT static_font = CreateFont( -25, -15, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
-		OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, TEXT("Times New Roman")
-	);
-	SendMessage(mistakes_text, WM_SETFONT, (WPARAM)static_font, true);
-
 	HWND reset_button = CreateWindow("BUTTON", "New game", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-		100, 250, 150, 100, hw, HMENU(113), 0, 0);
+		100, 150, 150, 100, hw, HMENU(113), 0, 0);
 
 	SendMessage(reset_button, WM_SETFONT, (WPARAM)button_font, true);
 
@@ -157,8 +147,16 @@ void game_start(HWND hw, int mode)
 		1175, 200, 150, 100, hw, HMENU(114), 0, 0);
 
 	SendMessage(notes_button, WM_SETFONT, (WPARAM)button_font, true);
-}
 
+	HWND mistakes_text = CreateWindow("STATIC", ("Number of mistakes: 0/3"), WS_CHILD | WS_VISIBLE | SS_LEFT,
+		1060, 100, 371, 30, hw, HMENU(112), 0, 0);
+
+	HFONT static_font = CreateFont(-25, -15, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
+		OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, TEXT("Times New Roman")
+	);
+	SendMessage(mistakes_text, WM_SETFONT, (WPARAM)static_font, true);
+}
+//brise sve gumbe, stavlja vrijednosti na pocetno stanje i resetira igru
 void reset_game(HWND hw)
 {
 	for (int i = 0; i < 81; i++)
@@ -171,11 +169,8 @@ void reset_game(HWND hw)
 
 	number_buttons.clear();
 
-	DestroyWindow(GetDlgItem(hw, 110));
-	DestroyWindow(GetDlgItem(hw, 111));
-	DestroyWindow(GetDlgItem(hw, 112));
-	DestroyWindow(GetDlgItem(hw, 113));
-	DestroyWindow(GetDlgItem(hw, 114));
+	for (int i = 110; i < 115; i++)
+		DestroyWindow(GetDlgItem(hw, i));
 
 	mistakes = 0;
 	rect_drawn = false;
@@ -184,10 +179,10 @@ void reset_game(HWND hw)
 	ShowWindow(n_button, SW_SHOW);
 	ShowWindow(h_button, SW_SHOW);
 
-	InvalidateRect(hw, nullptr, TRUE);
+	InvalidateRect(hw, 0, true);
 	UpdateWindow(hw);
 }
-
+//crta crnu pozadinu za sudoku polja
 void on_paint(HWND hw)
 {
 	PAINTSTRUCT ps;
@@ -196,17 +191,16 @@ void on_paint(HWND hw)
 	if (rect_drawn)
 	{
 		HBRUSH brush = CreateSolidBrush(RGB(0, 0, 0));
-		RECT r = { 318, 118, 963, 763 };
+		RECT r = { 318, 78, 963, 723 };
 		FillRect(hdc, &r, brush);
-
 		DeleteObject(brush);
-
 		EndPaint(hw, &ps);
 	}
 }
 
 void on_command(HWND hw, int id)
 {
+	//ako je kliknut sudoku gumb oznacava ga i oznacava sve gumbe s istim brojem
 	if (id >= 0 && id < 81)
 	{
 		if (selected_sudoku_id != -1)
@@ -214,7 +208,6 @@ void on_command(HWND hw, int id)
 
 		selected_sudoku_id = id;
 		sudoku_buttons[selected_sudoku_id].setClickedButton(true);
-
 
 		for (int i = 0; i < 81; i++)
 		{
@@ -226,11 +219,12 @@ void on_command(HWND hw, int id)
 				InvalidateRect(button, 0, true);
 			}			
 		}
-
 		HWND button = GetDlgItem(hw, sudoku_buttons[selected_sudoku_id].getId());
 		InvalidateRect(button, 0, true);
 	}
-	
+	/*ako je kliknut gumb za broj, ako je notes iskljucen upisuje se u sudoku polje, a ako je ukljucen,
+	upisuje se u obliku biljeske, takoder, provjerava se da li je upisan dobar broj, broji greske i vraca poruku
+	ovisno da li je korisnik pobjedio (ispunio sva polja) ili izgubio (upisao 3 kriva broja)*/
 	if (id >= 101 && id <= 109)
 	{
 		selected_number_id = id;
@@ -313,7 +307,6 @@ void on_command(HWND hw, int id)
 					note_numbers[idx] = selected_note_number;
 
 				sudoku_buttons[selected_sudoku_id].setNoteNumbers(note_numbers);
-
 				sudoku_buttons[selected_sudoku_id].setText(note_numbers[0] + "      " + note_numbers[1] + "      " + note_numbers[2] + "\n\n"
 														+ note_numbers[3] + "      " + note_numbers[4] + "      " + note_numbers[5] + "\n\n"
 														+ note_numbers[6] + "      " + note_numbers[7] + "      " + note_numbers[8]);		
@@ -321,7 +314,7 @@ void on_command(HWND hw, int id)
 		}
 	}
 	selected_number_id = -1;
-	
+	//ako je kliknut gumb "delete", brise se uneseni broj ili biljeska i isti brojevi vise nisu oznaceni
 	if (id == 110)
 	{
 		for (int i = 0; i < 81; i++)
@@ -339,7 +332,8 @@ void on_command(HWND hw, int id)
 			}
 		}
 	}
-
+	/* ako je kliknut gumb "solve", prazno polje se ispunjava tocnim brojem, te ako je odabrano zadnje polje bilo
+	prazno salje se poruka za kraj igre*/
 	if (id == 111)
 	{
 		int correct_counter = 0;
@@ -384,13 +378,13 @@ void on_command(HWND hw, int id)
 				::PostQuitMessage(0);
 		}
 	}
-
+	//ako je kliknut gumb "new game", salje se poruka za potvrdu i ako je odabrano "yes" igra se resetira
 	if (id == 113)
 	{
 		if (MessageBox(hw, "Are you sure you want to start a new game?", "New game", MB_YESNO | MB_ICONINFORMATION) == IDYES)
 			reset_game(hw);
 	}
-
+	//ako je kliknut gumb "notes", ukljucuje ili iskljucuje mogucnost unosa biljeski
 	if (id == 114)
 	{
 		notes_on = !notes_on;
@@ -446,25 +440,24 @@ void on_drawitem(LPARAM lp)
 	{
 		if (dis->CtlID == sudoku_buttons[i].getId())
 		{
-
+			
 			bool isPressed = (dis->itemState & ODS_SELECTED);
 			bool isFocused = (dis->itemState & ODS_FOCUS);
 
 			COLORREF button_color = RGB(240, 240, 240);
-
+			//ako je kliknut sudoku gumb mijenja boju
 			if (sudoku_buttons[i].getClickedButton())
 				button_color = RGB(190, 190, 230);
-
+			//mijenja boju gumba ako imaju isti broj kliknutog gumba
 			if (sudoku_buttons[i].getNumberHighlighted())
 				button_color = RGB(220, 220, 235);
 
 			HBRUSH brush = CreateSolidBrush(button_color);
 			FillRect(dis->hDC, &dis->rcItem, brush);
-
 			DrawEdge(dis->hDC, &dis->rcItem, EDGE_RAISED, BF_RECT);
-
 			SetBkMode(dis->hDC, TRANSPARENT);
-
+			/*ako je uneseni broj krivi boja teksa je crvena, ako je tocan boja teksta je plava,
+			font se mijenja ovisno o tome da li je unesena biljeska*/
 			if (sudoku_buttons[i].getText().size() == 1)
 			{
 				HFONT font1 = (HFONT)SelectObject(dis->hDC, button_font);
@@ -477,10 +470,9 @@ void on_drawitem(LPARAM lp)
 			}
 			else
 				HFONT font2 = (HFONT)SelectObject(dis->hDC, notes_font);
-
+			//tekst se centrira 
 			string text = sudoku_buttons[i].getText();
 			RECT r_text = dis->rcItem;
-
 			RECT measure = r_text;
 			DrawText(dis->hDC, text.c_str(), -1, &measure, DT_CENTER | DT_WORDBREAK | DT_CALCRECT | DT_NOPREFIX);
 
@@ -489,7 +481,6 @@ void on_drawitem(LPARAM lp)
 			int vertical = (c_height - text_height) / 2;
 
 			r_text.top += vertical;
-
 			DrawText(dis->hDC, text.c_str(), -1, &r_text, DT_CENTER | DT_WORDBREAK | DT_NOPREFIX);
 
 			DeleteObject(brush);
@@ -525,7 +516,6 @@ LRESULT CALLBACK window_proc(HWND hw, UINT msg, WPARAM wp, LPARAM lp)
 	return ::DefWindowProc(hw, msg, wp, lp);
 }
 
-
 int register_class(HINSTANCE hi, const char* name)
 {
 	WNDCLASS wc{};
@@ -540,13 +530,12 @@ int register_class(HINSTANCE hi, const char* name)
 
 int WINAPI WinMain(HINSTANCE hi, HINSTANCE, LPSTR cmd_line, int show_flag)
 {
-	const auto class_name1 = "TheGame";
-	if (!register_class(hi, class_name1) || !register_class(hi, class_name2))
+	const auto window = "Sudoku";
+
+	if (!register_class(hi, window))
 		return 0;
-	int screen_w = GetSystemMetrics(SM_CXSCREEN);
-	int screen_h = GetSystemMetrics(SM_CYSCREEN);
-	::CreateWindow(class_name1, "Sudoku", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-		CW_USEDEFAULT, CW_USEDEFAULT, screen_w, screen_h, 0, 0, hi, 0);
+	::CreateWindow(window, "Sudoku", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+		CW_USEDEFAULT, CW_USEDEFAULT, 0, 0, 0, 0, hi, 0);
 	MSG msg;
 	while (::GetMessage(&msg, 0, 0, 0))
 		::DispatchMessage(&msg);
