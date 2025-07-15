@@ -172,8 +172,12 @@ void reset_game(HWND hw)
 	for (int i = 110; i < 115; i++)
 		DestroyWindow(GetDlgItem(hw, i));
 
+	selected_sudoku_id = -1;
+	selected_number_id = -1;
 	mistakes = 0;
+	notes_on = false;
 	rect_drawn = false;
+
 
 	ShowWindow(e_button, SW_SHOW);
 	ShowWindow(n_button, SW_SHOW);
