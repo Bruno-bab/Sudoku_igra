@@ -5,7 +5,7 @@
 
 // Returns false if given 3x3 block contains num
 // Ensure the number is not used in the box
-bool unUsedInBox(vector<vector<int>>& grid, int rowStart, int colStart, int num) {
+bool unUsedInBox(std::vector<std::vector<int>>& grid, int rowStart, int colStart, int num) {
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
             if (grid[rowStart + i][colStart + j] == num) {
@@ -18,7 +18,7 @@ bool unUsedInBox(vector<vector<int>>& grid, int rowStart, int colStart, int num)
 
 // Fill a 3x3 matrix
 // Assign valid random numbers to the 3x3 subgrid
-void fillBox(vector<vector<int>>& grid, int row, int col) {
+void fillBox(std::vector<std::vector<int>>& grid, int row, int col) {
     int num;
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
@@ -34,7 +34,7 @@ void fillBox(vector<vector<int>>& grid, int row, int col) {
 
 // Check if it's safe to put num in row i
 // Ensure num is not already used in the row
-bool unUsedInRow(vector<vector<int>>& grid, int i, int num) {
+bool unUsedInRow(std::vector<std::vector<int>>& grid, int i, int num) {
     for (int j = 0; j < 9; j++) {
         if (grid[i][j] == num) {
             return false;
@@ -45,7 +45,7 @@ bool unUsedInRow(vector<vector<int>>& grid, int i, int num) {
 
 // Check if it's safe to put num in column j
 // Ensure num is not already used in the column
-bool unUsedInCol(vector<vector<int>>& grid, int j, int num) {
+bool unUsedInCol(std::vector<std::vector<int>>& grid, int j, int num) {
     for (int i = 0; i < 9; i++) {
         if (grid[i][j] == num) {
             return false;
@@ -56,14 +56,14 @@ bool unUsedInCol(vector<vector<int>>& grid, int j, int num) {
 
 // Check if it's safe to put num in the cell (i, j)
 // Ensure num is not used in row, column, or box
-bool checkIfSafe(vector<vector<int>>& grid, int i, int j, int num) {
+bool checkIfSafe(std::vector<std::vector<int>>& grid, int i, int j, int num) {
     return (unUsedInRow(grid, i, num) && unUsedInCol(grid, j, num) &&
         unUsedInBox(grid, i - i % 3, j - j % 3, num));
 }
 
 // Fill the diagonal 3x3 matrices
 // The diagonal blocks are filled to simplify the process
-void fillDiagonal(vector<vector<int>>& grid) {
+void fillDiagonal(std::vector<std::vector<int>>& grid) {
     for (int i = 0; i < 9; i = i + 3) {
 
         // Fill each 3x3 subgrid diagonally
@@ -73,7 +73,7 @@ void fillDiagonal(vector<vector<int>>& grid) {
 
 // Fill remaining blocks in the grid
 // Recursively fill the remaining cells with valid numbers
-bool fillRemaining(vector<vector<int>>& grid, int i, int j) {
+bool fillRemaining(std::vector<std::vector<int>>& grid, int i, int j) {
 
     // If we've reached the end of the grid
     if (i == 9) {
@@ -106,7 +106,7 @@ bool fillRemaining(vector<vector<int>>& grid, int i, int j) {
 
 // Remove K digits randomly from the grid
 // This will create a Sudoku puzzle by removing digits
-void removeKDigits(vector<vector<int>>& grid, int k) {
+void removeKDigits(std::vector<std::vector<int>>& grid, int k) {
     while (k > 0) {
 
         // Pick a random cell
@@ -131,10 +131,10 @@ void removeKDigits(vector<vector<int>>& grid, int k) {
 }
 
 // Generate a Sudoku grid with K empty cells
-vector<vector<int>> sudokuGenerator(int k) {
+std::vector<std::vector<int>> sudokuGenerator(int k) {
 
     // Initialize an empty 9x9 grid
-    vector<vector<int>> grid(9, vector<int>(9, 0));
+    std::vector<std::vector<int>> grid(9, std::vector<int>(9, 0));
 
     // Fill the diagonal 3x3 matrices
     fillDiagonal(grid);

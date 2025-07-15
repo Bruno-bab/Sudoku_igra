@@ -81,7 +81,7 @@ void on_command(HWND hw, int id)
 			{
 				if (sudoku_buttons[selected_sudoku_id].getText() == "")
 				{
-					string number = number_buttons[selected_number_id - 101].getText();
+					std::string number = number_buttons[selected_number_id - 101].getText();
 					sudoku_buttons[selected_sudoku_id].setText(number);
 					sudoku_buttons[selected_sudoku_id].setEnteredNumber(true);
 
@@ -101,12 +101,12 @@ void on_command(HWND hw, int id)
 					InvalidateRect(button, 0, true);
 
 					if (sudoku_buttons[selected_sudoku_id].getText() !=
-						to_string(solved_sudoku[selected_sudoku_id / 9][selected_sudoku_id % 9]) &&
+						std::to_string(solved_sudoku[selected_sudoku_id / 9][selected_sudoku_id % 9]) &&
 						sudoku_buttons[selected_sudoku_id].getText() != "")
 					{
 						mistakes++;
 						HWND hStatic = GetDlgItem(hw, 112);
-						string stext = "Number of mistakes: " + to_string(mistakes) + "/3";
+						std::string stext = "Number of mistakes: " + std::to_string(mistakes) + "/3";
 						SetWindowText(hStatic, stext.c_str());
 
 						InvalidateRect(hStatic, 0, true);
@@ -131,7 +131,7 @@ void on_command(HWND hw, int id)
 
 					for (int i = 0; i < 81; i++)
 					{
-						if (to_string(solved_sudoku[i / 9][i % 9]) == sudoku_buttons[i].getText())
+						if (std::to_string(solved_sudoku[i / 9][i % 9]) == sudoku_buttons[i].getText())
 							correct_counter++;
 					}
 
@@ -146,8 +146,8 @@ void on_command(HWND hw, int id)
 			}
 			else
 			{
-				vector<string> note_numbers = sudoku_buttons[selected_sudoku_id].getNoteNumbers();
-				string selected_note_number = number_buttons[selected_number_id - 101].getText();
+				std::vector<std::string> note_numbers = sudoku_buttons[selected_sudoku_id].getNoteNumbers();
+				std::string selected_note_number = number_buttons[selected_number_id - 101].getText();
 
 				int idx = stoi(selected_note_number) - 1;
 				if (note_numbers[idx] == "")
@@ -173,7 +173,7 @@ void on_command(HWND hw, int id)
 
 			if (sudoku_buttons[i].getClickedButton() && sudoku_buttons[i].getText().size() > 1)
 			{
-				vector<string> empty_notes(9, "");
+				std::vector<std::string> empty_notes(9, "");
 				sudoku_buttons[i].setNoteNumbers(empty_notes);
 				sudoku_buttons[i].setText("");
 			}
@@ -184,7 +184,7 @@ void on_command(HWND hw, int id)
 	if (id == 111)
 	{
 		int correct_counter = 0;
-		string inserted_value = "";
+		std::string inserted_value = "";
 
 		for (int i = 0; i < 81; i++)
 		{
@@ -192,7 +192,7 @@ void on_command(HWND hw, int id)
 
 			if (sudoku_buttons[i].getClickedButton() && sudoku_buttons[i].getText() == "")
 			{
-				inserted_value = to_string(solved_sudoku[i / 9][i % 9]);
+				inserted_value = std::to_string(solved_sudoku[i / 9][i % 9]);
 				sudoku_buttons[i].setText(inserted_value);
 				sudoku_buttons[i].setEnteredNumber(true);
 			}
@@ -213,7 +213,7 @@ void on_command(HWND hw, int id)
 
 		for (int i = 0; i < 81; i++)
 		{
-			if (to_string(solved_sudoku[i / 9][i % 9]) == sudoku_buttons[i].getText())
+			if (std::to_string(solved_sudoku[i / 9][i % 9]) == sudoku_buttons[i].getText())
 				correct_counter++;
 		}
 
@@ -309,7 +309,7 @@ void on_drawitem(LPARAM lp)
 			{
 				HFONT font1 = (HFONT)SelectObject(dis->hDC, button_font);
 
-				if (sudoku_buttons[i].getText() != to_string(solved_sudoku[i / 9][i % 9]))
+				if (sudoku_buttons[i].getText() != std::to_string(solved_sudoku[i / 9][i % 9]))
 					SetTextColor(dis->hDC, RGB(255, 0, 0));
 
 				else if (sudoku_buttons[i].getEnteredNumber())
@@ -317,8 +317,8 @@ void on_drawitem(LPARAM lp)
 			}
 			else
 				HFONT font2 = (HFONT)SelectObject(dis->hDC, notes_font);
-			//tekst se centrira 
-			string text = sudoku_buttons[i].getText();
+			//centriranje teksta
+			std::string text = sudoku_buttons[i].getText();
 			RECT r_text = dis->rcItem;
 			RECT measure = r_text;
 			DrawText(dis->hDC, text.c_str(), -1, &measure, DT_CENTER | DT_WORDBREAK | DT_CALCRECT | DT_NOPREFIX);

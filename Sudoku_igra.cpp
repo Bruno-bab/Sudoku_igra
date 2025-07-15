@@ -1,8 +1,8 @@
 #include "Sudoku_igra.h"
 
-vector<vector<int>> solved_sudoku;
-vector<sudoku_button> sudoku_buttons;
-vector<number_button> number_buttons;
+std::vector<std::vector<int>> solved_sudoku;
+std::vector<sudoku_button> sudoku_buttons;
+std::vector<number_button> number_buttons;
 
 int selected_sudoku_id = -1;
 int selected_number_id = -1;
@@ -21,14 +21,14 @@ HFONT notes_font = CreateFont(14, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_
 	OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, TEXT("Times New Roman"));
 
 //generira rijesenu sudoku igru
-vector<vector<int>> create_solved_sudoku()
+std::vector<std::vector<int>> create_solved_sudoku()
 {
 	srand(time(0));
-	vector<vector<int>> solved_sudoku = sudokuGenerator(0);
+	std::vector<std::vector<int>> solved_sudoku = sudokuGenerator(0);
 	return solved_sudoku;
 }
 //uklanja k brojeva iz sudoku igre
-void remove_numbers(vector<vector<int>>& grid, int k)
+void remove_numbers(std::vector<std::vector<int>>& grid, int k)
 {
 	int count = 0;
 	while (count < k)
@@ -57,7 +57,7 @@ void game_start(HWND hw, int mode)
 
 	solved_sudoku = create_solved_sudoku();
 
-	vector<vector<int>> unsolved_sudoku = solved_sudoku;
+	std::vector<std::vector<int>> unsolved_sudoku = solved_sudoku;
 	remove_numbers(unsolved_sudoku, numbers_to_remove);
 	//kreiranje sudoku gumba
 	int y = 10;
@@ -76,7 +76,7 @@ void game_start(HWND hw, int mode)
 			else
 				x += 70;
 			if (unsolved_sudoku[i][j] != 0)
-				sudoku_buttons.emplace_back(hw, x, y, 70, 70, id, to_string(unsolved_sudoku[i][j]));
+				sudoku_buttons.emplace_back(hw, x, y, 70, 70, id, std::to_string(unsolved_sudoku[i][j]));
 			else
 				sudoku_buttons.emplace_back(hw, x, y, 70, 70, id, "");
 			id++;
@@ -91,7 +91,7 @@ void game_start(HWND hw, int mode)
 		y2 += 73;
 		for (int j = 0; j < 3; j++)
 		{
-			number_buttons.emplace_back(hw, x2, y2, 70, 70, 100 + counter, to_string(counter));
+			number_buttons.emplace_back(hw, x2, y2, 70, 70, 100 + counter, std::to_string(counter));
 			x2 += 73;
 			counter++;
 		}
