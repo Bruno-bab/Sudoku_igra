@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Number_generator.h"
 #include <windows.h>
 #include <string>
 
@@ -9,12 +10,12 @@ private:
     bool entered_number = false;
     bool clicked_button = false;
     bool number_highlighted = false;
-	HWND hwnd;
-	int id;
-	string text;
+    HWND hwnd;
+    int id;
+    string text;
     vector<string> note_numbers;
 public:
-    sudoku_button(HWND hw, int x, int y, int w, int h, int ID, const string& txt): id(ID), text(txt)
+    sudoku_button(HWND hw, int x, int y, int w, int h, int ID, const string& txt) : id(ID), text(txt)
     {
         hwnd = CreateWindow("BUTTON", "", WS_CHILD | WS_VISIBLE | BS_OWNERDRAW,
             x, y, 70, 70, hw, HMENU(ID), 0, 0);
@@ -46,7 +47,7 @@ public:
         InvalidateRect(hwnd, 0, true);
     }
 
-    void setNoteNumbers (vector<string> nn)
+    void setNoteNumbers(vector<string> nn)
     {
         note_numbers = nn;
         InvalidateRect(hwnd, 0, true);
@@ -72,22 +73,43 @@ private:
     int id;
     string text;
 public:
-    number_button(HWND hw, int x, int y, int width, int height, int ID, const string& txt): id(ID), text(txt)
+    number_button(HWND hw, int x, int y, int width, int height, int ID, const string& txt) : id(ID), text(txt)
     {
         hwnd = CreateWindow("BUTTON", txt.c_str(), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
             x, y, 70, 70, hw, HMENU(ID), 0, 0);
     }
 
     string getText() const { return text; }
-    
+
     int getId() const { return id; }
 };
 
-vector<vector<int>> createSolvedSudoku();
+LRESULT CALLBACK window_proc(HWND hw, UINT msg, WPARAM wp, LPARAM lp);
+
+int register_class(HINSTANCE hi, const char* name);
+
+vector<vector<int>> create_solved_sudoku();
 
 void remove_numbers(vector<vector<int>>& grid, int k);
 
 void game_start(HWND hw, int mode);
 
 void reset_game(HWND hw);
+
+extern vector<vector<int>> solved_sudoku;
+extern vector<sudoku_button> sudoku_buttons;
+extern vector<number_button> number_buttons;
+
+extern int selected_sudoku_id;
+extern int selected_number_id;
+extern int mistakes;
+extern bool notes_on;
+extern bool rect_drawn;
+
+extern HWND e_button;
+extern HWND n_button;
+extern HWND h_button;
+
+extern HFONT button_font;
+extern HFONT notes_font;
 

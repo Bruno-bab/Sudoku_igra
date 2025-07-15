@@ -138,6 +138,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="main.cpp" />
     <ClCompile Include="Sudoku_igra.cpp" />
     <ClCompile Include="Number_generator.cpp" />
   </ItemGroup>
