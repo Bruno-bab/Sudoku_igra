@@ -1,5 +1,4 @@
 #include "Sudoku_igra.h"
-#include <format>
 #include <windowsx.h>
 
 int application::run()
@@ -34,7 +33,7 @@ bool window::register_class(const tstring& name)
 tstring window::generate_class_name()
 {
 	static int n = 1;
-	return std::format(_T("Sudoku"), n++);
+	return _T("Sudoku") + std::to_string(n++);
 }
 
 bool window::create(HWND parent, DWORD style, LPCTSTR caption, UINT_PTR id_or_menu,
