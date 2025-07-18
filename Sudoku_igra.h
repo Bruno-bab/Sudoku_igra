@@ -3,7 +3,15 @@
 #include "Number_generator.h"  
 #include <windows.h>  
 #include <string>  
-#include <vector> 
+#include <tchar.h>
+
+using tstring = std::basic_string<TCHAR>;
+
+class application
+{
+public:
+	int run();
+};
 
 class sudoku_button  
 {  
@@ -74,7 +82,7 @@ private:
    int id;  
    std::string text;  
 public:  
-   number_button(HWND hw, int x, int y, int width, int height, int ID, const std::string& txt) : id(ID), text(txt) // Fixed "string" to "std::string"  
+   number_button(HWND hw, int x, int y, int width, int height, int ID, const std::string& txt) : id(ID), text(txt)
    {  
        hwnd = CreateWindow("BUTTON", txt.c_str(), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,  
            x, y, 70, 70, hw, HMENU(ID), 0, 0);  
@@ -83,33 +91,52 @@ public:
    std::string getText() const { return text; }  
 
    int getId() const { return id; }  
-};  
+}; 
 
-LRESULT CALLBACK window_proc(HWND hw, UINT msg, WPARAM wp, LPARAM lp);  
+class window
+{
+protected:
+    HWND hw{ 0 };
+    virtual tstring class_name();
+    bool register_class(const tstring& name);
+    tstring generate_class_name();
+    void game_start(HWND hw, int mode);
+    void reset_game(HWND hw);
 
-int register_class(HINSTANCE hi, const char* name);  
+    std::vector<std::vector<int>> solved_sudoku;
+    std::vector<sudoku_button> sudoku_buttons;
+    std::vector<number_button> number_buttons;
+
+    int selected_sudoku_id = -1;
+    int selected_number_id = -1;
+    int mistakes = 0;
+    bool notes_on = false;
+    bool rect_drawn = false;
+
+    HWND e_button;
+    HWND n_button;
+    HWND h_button;
+
+    HFONT button_font = CreateFont(-30, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
+        OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, TEXT("Times New Roman"));
+    HFONT notes_font = CreateFont(14, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
+        OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, TEXT("Times New Roman"));
+
+public:
+    bool create(HWND parent, DWORD style, LPCTSTR caption = 0, UINT_PTR id_or_menu = 0,
+        int x = CW_USEDEFAULT, int y = CW_USEDEFAULT, int width = CW_USEDEFAULT, int height = CW_USEDEFAULT);
+
+    operator HWND();
+    static LRESULT CALLBACK proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+
+protected:
+    virtual int on_create(CREATESTRUCT*) { return 0; }
+    virtual void on_command(int) {}
+    virtual void on_drawitem(LPARAM lp) {}
+    virtual void on_destroy() {}
+    virtual void on_paint(HWND hw) {}
+};
 
 std::vector<std::vector<int>> create_solved_sudoku();  
 
 void remove_numbers(std::vector<std::vector<int>>& grid, int k);  
-
-void game_start(HWND hw, int mode);  
-
-void reset_game(HWND hw);  
-
-extern std::vector<std::vector<int>> solved_sudoku;  
-extern std::vector<sudoku_button> sudoku_buttons;  
-extern std::vector<number_button> number_buttons;  
-
-extern int selected_sudoku_id;  
-extern int selected_number_id;  
-extern int mistakes;  
-extern bool notes_on;  
-extern bool rect_drawn;  
-
-extern HWND e_button;  
-extern HWND n_button;  
-extern HWND h_button;  
-
-extern HFONT button_font;  
-extern HFONT notes_font;

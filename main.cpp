@@ -1,7 +1,15 @@
-#include "Sudoku_igra.h"
+#include "main.h"
 
-void on_create(HWND hw)
-{
+main_window::main_window() {
+	ZeroMemory(&lf, sizeof(lf));
+	_tcscpy_s(lf.lfFaceName, _T("Arial"));
+	HDC hdc = ::GetDC(0);
+	lf.lfHeight = -15 * ::GetDeviceCaps(hdc, LOGPIXELSY) / 72;
+	cr = RGB(0, 0, 0);
+	::ReleaseDC(0, hdc);
+}
+
+int main_window::on_create(CREATESTRUCT* pcs) {
 	ShowWindow(hw, SW_MAXIMIZE);
 
 	RECT r;
@@ -28,9 +36,11 @@ void on_create(HWND hw)
 		hw, (HMENU)202, 0, 0);
 
 	SendMessage(h_button, WM_SETFONT, (WPARAM)button_font, true);
+	return 0;
 }
+
 //crta crnu pozadinu za sudoku polja
-void on_paint(HWND hw)
+void main_window::on_paint(HWND hw)
 {
 	PAINTSTRUCT ps;
 	HDC hdc = BeginPaint(hw, &ps);
@@ -45,7 +55,7 @@ void on_paint(HWND hw)
 	}
 }
 
-void on_command(HWND hw, int id)
+void main_window::on_command(int id)
 {
 	//ako je kliknut sudoku gumb oznacava ga i oznacava sve gumbe s istim brojem
 	if (id >= 0 && id < 81)
@@ -279,7 +289,7 @@ void on_command(HWND hw, int id)
 	}
 }
 
-void on_drawitem(LPARAM lp)
+void main_window::on_drawitem(LPARAM lp)
 {
 	LPDRAWITEMSTRUCT dis = (LPDRAWITEMSTRUCT)lp;
 
@@ -335,56 +345,15 @@ void on_drawitem(LPARAM lp)
 	}
 }
 
-void on_destroy()
+void main_window::on_destroy()
 {
 	::PostQuitMessage(0);
 }
 
-LRESULT CALLBACK window_proc(HWND hw, UINT msg, WPARAM wp, LPARAM lp)
+int WINAPI WinMain(HINSTANCE hi, HINSTANCE, LPSTR, int)
 {
-	switch (msg)
-	{
-	case WM_CREATE:
-		on_create(hw);
-		return 0;
-	case WM_PAINT:
-		on_paint(hw);
-		return 0;
-	case WM_COMMAND:
-		on_command(hw, LOWORD(wp));
-		return 0;
-	case WM_DRAWITEM:
-		on_drawitem(lp);
-		return 0;
-	case WM_DESTROY:
-		on_destroy();
-		return 0;
-	}
-	return ::DefWindowProc(hw, msg, wp, lp);
-}
-
-int register_class(HINSTANCE hi, const char* name)
-{
-	WNDCLASS wc{};
-	wc.lpfnWndProc = window_proc;
-	wc.lpszClassName = name;
-	wc.hInstance = hi;
-	wc.style = CS_HREDRAW | CS_VREDRAW;
-	wc.hCursor = ::LoadCursor(0, IDC_ARROW);
-	wc.hbrBackground = CreateSolidBrush(RGB(255, 255, 255));
-	return ::RegisterClass(&wc);
-}
-
-int WINAPI WinMain(HINSTANCE hi, HINSTANCE, LPSTR cmd_line, int show_flag)
-{
-	const auto window = "Sudoku";
-
-	if (!register_class(hi, window))
-		return 0;
-	::CreateWindow(window, "Sudoku", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-		CW_USEDEFAULT, CW_USEDEFAULT, 0, 0, 0, 0, hi, 0);
-	MSG msg;
-	while (::GetMessage(&msg, 0, 0, 0))
-		::DispatchMessage(&msg);
-	return msg.wParam;
+	application app;
+	main_window wnd;
+	wnd.create(0, WS_OVERLAPPEDWINDOW | WS_VISIBLE, _T("Sudoku"));
+	return app.run();
 }

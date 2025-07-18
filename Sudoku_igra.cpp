@@ -1,24 +1,88 @@
 #include "Sudoku_igra.h"
+#include <format>
+#include <windowsx.h>
 
-std::vector<std::vector<int>> solved_sudoku;
-std::vector<sudoku_button> sudoku_buttons;
-std::vector<number_button> number_buttons;
+int application::run()
+{
+	MSG msg;
+	while (::GetMessage(&msg, NULL, 0, 0)) {
+		::TranslateMessage(&msg);
+		::DispatchMessage(&msg);
+	}
+	return (int)msg.wParam;
+}
 
-int selected_sudoku_id = -1;
-int selected_number_id = -1;
-int mistakes = 0;
-bool notes_on = false;
-bool rect_drawn = false;
+tstring window::class_name()
+{
+	return {};
+}
 
-HWND e_button;
-HWND n_button;
-HWND h_button;
+bool window::register_class(const tstring& name)
+{
+	WNDCLASS wc{};
+	wc.lpfnWndProc = proc;
+	wc.lpszClassName = name.c_str();
+	wc.cbWndExtra = sizeof(window*);
 
-HFONT button_font = CreateFont(-30, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
-	OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, TEXT("Times New Roman"));
+	wc.style = CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS;
+	wc.hCursor = ::LoadCursor(NULL, IDC_ARROW);
+	wc.hbrBackground = (HBRUSH)::GetStockObject(WHITE_BRUSH);
 
-HFONT notes_font = CreateFont(14, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
-	OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, TEXT("Times New Roman"));
+	return ::RegisterClass(&wc) != 0;
+}
+
+tstring window::generate_class_name()
+{
+	static int n = 1;
+	return std::format(_T("Sudoku"), n++);
+}
+
+bool window::create(HWND parent, DWORD style, LPCTSTR caption, UINT_PTR id_or_menu,
+	int x, int y, int width, int height)
+{
+	tstring cn = class_name();
+	if (cn.empty())
+		register_class(cn = generate_class_name());
+	hw = ::CreateWindow(cn.c_str(), caption, style, x, y, width, height, parent, (HMENU)id_or_menu, 0, this);
+	return hw != 0;
+}
+
+window::operator HWND()
+{
+	return hw;
+}
+
+LRESULT CALLBACK window::proc(HWND hw, UINT msg, WPARAM wp, LPARAM lp)  
+{  
+   if (msg == WM_CREATE) {  
+       CREATESTRUCT* pcs = reinterpret_cast<CREATESTRUCT*>(lp);  
+       window* pw = reinterpret_cast<window*>(pcs->lpCreateParams);  
+       ::SetWindowLongPtr(hw, 0, reinterpret_cast<LONG_PTR>(pw));  
+       pw->hw = hw;  
+       return pw->on_create(pcs);  
+   }  
+
+   window* pw = reinterpret_cast<window*>(::GetWindowLongPtr(hw, 0));  
+   switch (msg)  
+   {  
+   case WM_CREATE:  
+       pw->on_create(reinterpret_cast<CREATESTRUCT*>(lp));  
+       return 0;
+   case WM_PAINT:
+	   pw->on_paint(hw);
+	   return 0;
+   case WM_COMMAND:  
+       pw->on_command(LOWORD(wp));  
+       return 0;  
+   case WM_DRAWITEM:  
+       pw->on_drawitem(lp);  
+       return 0;
+   case WM_DESTROY:
+	   pw->on_destroy();
+	   return 0;
+   }  
+   return ::DefWindowProc(hw, msg, wp, lp);  
+}
 
 //generira rijesenu sudoku igru
 std::vector<std::vector<int>> create_solved_sudoku()
@@ -43,7 +107,7 @@ void remove_numbers(std::vector<std::vector<int>>& grid, int k)
 	}
 }
 
-void game_start(HWND hw, int mode)
+void window::game_start(HWND hw, int mode)
 {
 	srand(time(0));
 	//uklanja brojeve iz sudoku igre ovisno o odabranoj težini
@@ -126,7 +190,7 @@ void game_start(HWND hw, int mode)
 	SendMessage(mistakes_text, WM_SETFONT, (WPARAM)static_font, true);
 }
 //brise sve gumbe, stavlja vrijednosti na pocetno stanje i resetira igru
-void reset_game(HWND hw)
+void window::reset_game(HWND hw)
 {
 	for (int i = 0; i < 81; i++)
 		DestroyWindow(GetDlgItem(hw, sudoku_buttons[i].getId()));
