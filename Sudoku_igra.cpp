@@ -74,8 +74,13 @@ LRESULT CALLBACK window::proc(HWND hw, UINT msg, WPARAM wp, LPARAM lp)
        pw->on_command(LOWORD(wp));  
        return 0;  
    case WM_DRAWITEM:  
-       pw->on_drawitem(lp);  
+       pw->on_drawitem(lp);
        return 0;
+   case WM_SIZE:
+   {
+	   pw->on_size(LOWORD(lp), HIWORD(lp));
+	   return 0;
+   }
    case WM_DESTROY:
 	   pw->on_destroy();
 	   return 0;
@@ -122,71 +127,42 @@ void window::game_start(HWND hw, int mode)
 
 	std::vector<std::vector<int>> unsolved_sudoku = solved_sudoku;
 	remove_numbers(unsolved_sudoku, numbers_to_remove);
+
 	//kreiranje sudoku gumba
-	int y = 10;
-	int id = 0;
-	for (int i = 0; i < 9; i++)
+	for (int i = 0; i < 81; i++)
 	{
-		if (i % 3 == 0)
-			y += 73;
+		int row = i / 9;
+		int col = i % 9;
+		if (unsolved_sudoku[row][col] != 0)
+			sudoku_buttons.emplace_back(hw, 0, 0, 0, 0, i, std::to_string(unsolved_sudoku[row][col]));
 		else
-			y += 70;
-		int x = 250;
-		for (int j = 0; j < 9; j++)
-		{
-			if (j % 3 == 0)
-				x += 73;
-			else
-				x += 70;
-			if (unsolved_sudoku[i][j] != 0)
-				sudoku_buttons.emplace_back(hw, x, y, 70, 70, id, std::to_string(unsolved_sudoku[i][j]));
-			else
-				sudoku_buttons.emplace_back(hw, x, y, 70, 70, id, "");
-			id++;
-		}
+			sudoku_buttons.emplace_back(hw, 0, 0, 0, 0, i, "");
 	}
 	//kreiranje gumba za brojeve
-	int y2 = 270;
-	int counter = 1;
-	for (int i = 0; i < 3; i++)
-	{
-		int x2 = 1140;
-		y2 += 73;
-		for (int j = 0; j < 3; j++)
-		{
-			number_buttons.emplace_back(hw, x2, y2, 70, 70, 100 + counter, std::to_string(counter));
-			x2 += 73;
-			counter++;
-		}
-	}
+	for (int i = 0; i < 9; i++)
+		number_buttons.emplace_back(hw, 0, 0, 0, 0, 101 + i, std::to_string(i + 1));
+
 	//kreiranje ostalih gumba i statica
-	HWND delete_button = CreateWindow("BUTTON", "Delete", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-		1050, 200, 100, 100, hw, HMENU(110), 0, 0);
+	delete_button = CreateWindow("BUTTON", "Delete", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+		0, 0, 0, 0, hw, HMENU(110), 0, 0);
 
-	SendMessage(delete_button, WM_SETFONT, (WPARAM)button_font, true);
+	solve_button = CreateWindow("BUTTON", "Solve", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+		0, 0, 0, 0, hw, HMENU(111), 0, 0);
 
-	HWND solve_button = CreateWindow("BUTTON", "Solve", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-		1350, 200, 100, 100, hw, HMENU(111), 0, 0);
+	reset_button = CreateWindow("BUTTON", "New game", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+		0, 0, 0, 0, hw, HMENU(113), 0, 0);
 
-	SendMessage(solve_button, WM_SETFONT, (WPARAM)button_font, true);
+	notes_button = CreateWindow("BUTTON", "Notes: OFF", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+		0, 0, 0, 0, hw, HMENU(114), 0, 0);
 
-	HWND reset_button = CreateWindow("BUTTON", "New game", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-		100, 150, 150, 100, hw, HMENU(113), 0, 0);
-
-	SendMessage(reset_button, WM_SETFONT, (WPARAM)button_font, true);
-
-	HWND notes_button = CreateWindow("BUTTON", "Notes: OFF", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-		1175, 200, 150, 100, hw, HMENU(114), 0, 0);
-
-	SendMessage(notes_button, WM_SETFONT, (WPARAM)button_font, true);
-
-	HWND mistakes_text = CreateWindow("STATIC", ("Number of mistakes: 0/3"), WS_CHILD | WS_VISIBLE | SS_LEFT,
+	mistakes_text = CreateWindow("STATIC", ("Number of mistakes: 0/3"), WS_CHILD | WS_VISIBLE | SS_LEFT,
 		1060, 100, 371, 30, hw, HMENU(112), 0, 0);
 
-	HFONT static_font = CreateFont(-25, -15, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
-		OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, TEXT("Times New Roman")
-	);
-	SendMessage(mistakes_text, WM_SETFONT, (WPARAM)static_font, true);
+	RECT r;
+	GetClientRect(hw, &r);
+	int w = r.right - r.left;
+	int h = r.bottom - r.top;
+	on_size(w, h);
 }
 //brise sve gumbe, stavlja vrijednosti na pocetno stanje i resetira igru
 void window::reset_game(HWND hw)
@@ -217,4 +193,18 @@ void window::reset_game(HWND hw)
 
 	InvalidateRect(hw, 0, true);
 	UpdateWindow(hw);
+}
+
+void ScaleAndMove(HWND hwnd, int ref_x, int ref_y, int ref_w, int ref_h,
+	int current_w, int current_h, int ref_width, int ref_height)
+{
+	float scale_x = (float)current_w / ref_width;
+	float scale_y = (float)current_h / ref_height;
+
+	int x = static_cast<int>(ref_x * scale_x);
+	int y = static_cast<int>(ref_y * scale_y);
+	int w = static_cast<int>(ref_w * scale_x);
+	int h = static_cast<int>(ref_h * scale_y);
+
+	MoveWindow(hwnd, x, y, w, h, TRUE);
 }

@@ -12,5 +12,6 @@ protected:
 	void on_paint(HWND hw) override;
 	void on_command(int id) override;
 	void on_drawitem(LPARAM lp) override;
+	void on_size(int w, int h) override;
 	void on_destroy() override;
 };

@@ -73,6 +73,8 @@ public:
    int getId() const { return id; }  
 
    std::vector<std::string> getNoteNumbers() const { return note_numbers; }  
+
+   HWND getHWND() const { return hwnd; }
 };  
 
 class number_button  
@@ -117,10 +119,17 @@ protected:
     HWND n_button;
     HWND h_button;
 
+    HWND delete_button;
+    HWND solve_button;
+    HWND reset_button;
+    HWND notes_button;
+    HWND mistakes_text;
+
     HFONT button_font = CreateFont(-30, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
-        OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, TEXT("Times New Roman"));
+        OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, TEXT("Arial"));
+
     HFONT notes_font = CreateFont(14, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
-        OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, TEXT("Times New Roman"));
+        OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_SWISS, TEXT("Arial"));
 
 public:
     bool create(HWND parent, DWORD style, LPCTSTR caption = 0, UINT_PTR id_or_menu = 0,
@@ -134,9 +143,12 @@ protected:
     virtual void on_command(int) {}
     virtual void on_drawitem(LPARAM lp) {}
     virtual void on_destroy() {}
+    virtual void on_size(int w, int h) {}
     virtual void on_paint(HWND hw) {}
 };
 
 std::vector<std::vector<int>> create_solved_sudoku();  
 
-void remove_numbers(std::vector<std::vector<int>>& grid, int k);  
+void remove_numbers(std::vector<std::vector<int>>& grid, int k);
+
+void ScaleAndMove(HWND hwnd, int ref_x, int ref_y, int ref_w, int ref_h, int current_w, int current_h, int ref_width, int ref_height);

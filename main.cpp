@@ -9,7 +9,99 @@ main_window::main_window() {
 	::ReleaseDC(0, hdc);
 }
 
-int main_window::on_create(CREATESTRUCT* pcs) {
+void main_window::on_size(int w, int h)
+{
+	int font_h = -MulDiv(h / 25, GetDeviceCaps(GetDC(hw), LOGPIXELSY), 72) / 1.5;
+	int font_w = -MulDiv(w / 25, GetDeviceCaps(GetDC(hw), LOGPIXELSY), 72) / 6;
+
+	HFONT scaled_font = CreateFont(font_h, font_w, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
+		OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, TEXT("Arial"));
+
+	int dif_w = w / 7;
+	int dif_h = h / 11;
+	int dif_x = (w - dif_w) / 2;
+	int dif_y = (h - dif_h) / 2;
+
+	MoveWindow(e_button, dif_x, dif_y * 0.4, dif_w, dif_h, true);
+	MoveWindow(n_button, dif_x, dif_y * 0.7, dif_w, dif_h, true);
+	MoveWindow(h_button, dif_x, dif_y, dif_w, dif_h, true);
+
+	SendMessage(e_button, WM_SETFONT, (WPARAM)scaled_font, true);
+	SendMessage(n_button, WM_SETFONT, (WPARAM)scaled_font, true);
+	SendMessage(h_button, WM_SETFONT, (WPARAM)scaled_font, true);
+
+	int cell_w = w / 22;
+	int cell_h = h / 11;
+	int cell_size = min(cell_w, cell_h);
+	int space = cell_size / 15;
+
+	int sud_x = (w - (9 * cell_size + space * 2)) / 2.75;
+	int sud_y = (h - (9 * cell_size + space * 2)) / 2;
+
+	for (int i = 0; i < sudoku_buttons.size(); i++)
+	{
+		int row = i / 9;
+		int col = i % 9;
+
+		int extra_x = (col / 3) * space;
+		int extra_y = (row / 3) * space;
+
+		int x = sud_x + col * cell_size + extra_x;
+		int y = sud_y + row * cell_size + extra_y;
+
+		HWND button = GetDlgItem(hw, sudoku_buttons[i].getId());
+		MoveWindow(button, x, y, cell_size, cell_size, true);
+		SendMessage(button, WM_SETFONT, (WPARAM)scaled_font, true);
+	}
+
+	int num_x = (w - cell_size) / 1.3;
+	int num_y = (h - cell_size) / 2;
+
+	for (int i = 0; i < number_buttons.size(); i++)
+	{
+		int row = i / 3;
+		int col = i % 3;
+
+		int x = num_x + col * cell_size;
+		int y = num_y + row * cell_size;
+
+		HWND button = GetDlgItem(hw, number_buttons[i].getId());
+		MoveWindow(button, x, y, cell_size, cell_size, true);
+	}
+
+	int btn_w = w / 10;
+	int btn_h = h / 10;
+
+	int delete_x = w * 0.7;
+	int delete_y = h * 0.25;
+
+	int solve_x = w * 0.9;
+	int solve_y = delete_y;
+
+	int reset_x = w * 0.05;
+	int reset_y = h * 0.15;
+
+	int notes_x = w * 0.78;
+	int notes_y = delete_y;
+
+	int mistakes_x = w * 0.73;
+	int mistakes_y = w * 0.07;
+
+	MoveWindow(delete_button, delete_x, delete_y, btn_w / 1.6, btn_h, true);
+	MoveWindow(solve_button, solve_x, solve_y, btn_w / 1.6, btn_h, true);
+	MoveWindow(reset_button, reset_x, reset_y, btn_w, btn_h, true);
+	MoveWindow(notes_button, notes_x, notes_y, btn_w, btn_h, true);
+	MoveWindow(mistakes_text, mistakes_x, mistakes_y, btn_w * 2.1, btn_h * 0.4, true);
+
+	SendMessage(delete_button, WM_SETFONT, (WPARAM)scaled_font, true);
+	SendMessage(solve_button, WM_SETFONT, (WPARAM)scaled_font, true);
+	SendMessage(reset_button, WM_SETFONT, (WPARAM)scaled_font, true);
+	SendMessage(notes_button, WM_SETFONT, (WPARAM)scaled_font, true);
+	SendMessage(mistakes_text, WM_SETFONT, (WPARAM)scaled_font, true);
+}
+
+int main_window::on_create(CREATESTRUCT* pcs)
+{
 	ShowWindow(hw, SW_MAXIMIZE);
 
 	RECT r;
@@ -21,21 +113,16 @@ int main_window::on_create(CREATESTRUCT* pcs) {
 		x, 150, 150, 100,
 		hw, (HMENU)200, 0, 0);
 
-	SendMessage(e_button, WM_SETFONT, (WPARAM)button_font, true);
-
 	n_button = CreateWindow(TEXT("BUTTON"), TEXT("Normal"),
 		WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
 		x, 300, 150, 100,
 		hw, (HMENU)201, 0, 0);
-
-	SendMessage(n_button, WM_SETFONT, (WPARAM)button_font, true);
 
 	h_button = CreateWindow(TEXT("BUTTON"), TEXT("Hard"),
 		WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
 		x, 450, 150, 100,
 		hw, (HMENU)202, 0, 0);
 
-	SendMessage(h_button, WM_SETFONT, (WPARAM)button_font, true);
 	return 0;
 }
 
@@ -47,11 +134,33 @@ void main_window::on_paint(HWND hw)
 
 	if (rect_drawn)
 	{
+		RECT r;
+		GetClientRect(*this, &r);
+		int width = r.right - r.left;
+		int height = r.bottom - r.top;
+
+		int cell_w =  width/ 22;
+		int cell_h = height / 11;
+		int cell_size = min(cell_w, cell_h);
+
+		int block_spacing = cell_size / 5;
+		int total_spacing = block_spacing * 2;
+
+		int grid_width = 9 * cell_size + total_spacing;
+		int grid_height = 9 * cell_size + total_spacing;
+
+		int sud_x = (width - grid_width) / 2.78;
+		int sud_y = (height - grid_height) / 1.98;
+
+		RECT border = {sud_x,
+			sud_y,
+			sud_x + grid_width,
+			sud_y + grid_height
+		};
+
 		HBRUSH brush = CreateSolidBrush(RGB(0, 0, 0));
-		RECT r = { 318, 78, 963, 723 };
-		FillRect(hdc, &r, brush);
+		FillRect(hdc, &border, brush);
 		DeleteObject(brush);
-		EndPaint(hw, &ps);
 	}
 }
 
@@ -344,6 +453,7 @@ void main_window::on_drawitem(LPARAM lp)
 		}
 	}
 }
+
 
 void main_window::on_destroy()
 {
