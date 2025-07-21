@@ -108,20 +108,20 @@ int main_window::on_create(CREATESTRUCT* pcs)
 	GetClientRect(hw, &r);
 	int x = (r.left + r.right) / 2 - 75;
 
-	e_button = CreateWindow(TEXT("BUTTON"), TEXT("Easy"),
+	e_button = CreateWindow("BUTTON", load_text(IDS_BTN_EASY).c_str(),
 		WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
 		x, 150, 150, 100,
-		hw, (HMENU)200, 0, 0);
+		hw, (HMENU)IDS_BTN_EASY, 0, 0);
 
-	n_button = CreateWindow(TEXT("BUTTON"), TEXT("Normal"),
+	n_button = CreateWindow("BUTTON", load_text(IDS_BTN_NORMAL).c_str(),
 		WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
 		x, 300, 150, 100,
-		hw, (HMENU)201, 0, 0);
+		hw, (HMENU)IDS_BTN_NORMAL, 0, 0);
 
-	h_button = CreateWindow(TEXT("BUTTON"), TEXT("Hard"),
+	h_button = CreateWindow("BUTTON", load_text(IDS_BTN_HARD).c_str(),
 		WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
 		x, 450, 150, 100,
-		hw, (HMENU)202, 0, 0);
+		hw, (HMENU)IDS_BTN_HARD, 0, 0);
 
 	return 0;
 }
@@ -233,7 +233,8 @@ void main_window::on_command(int id)
 
 						if (mistakes >= 3)
 						{
-							if (MessageBox(hw, "Game Over! You have made 3 mistakes. Play again?", "Game over", MB_YESNO | MB_ICONERROR) == IDYES)
+							if (MessageBox(hw, load_text(IDS_GAME_OVER_MESSAGE).c_str(), load_text(IDS_GAME_OVER_TITLE).c_str(),
+								MB_YESNO | MB_ICONERROR) == IDYES)
 							{
 								reset_game(hw);
 								return;
@@ -256,7 +257,8 @@ void main_window::on_command(int id)
 
 					if (correct_counter == 81)
 					{
-						if (MessageBox(hw, "Sudoku solved! Play again?", "You win", MB_YESNO | MB_ICONINFORMATION) == IDYES)
+						if (MessageBox(hw, load_text(IDS_YOU_WIN_MESSAGE).c_str(), load_text(IDS_YOU_WIN_TITLE).c_str(),
+							MB_YESNO | MB_ICONINFORMATION) == IDYES)
 							reset_game(hw);
 						else
 							::PostQuitMessage(0);
@@ -281,7 +283,7 @@ void main_window::on_command(int id)
 	}
 	selected_number_id = -1;
 	//ako je kliknut gumb "delete", brise se uneseni broj ili biljeska i isti brojevi vise nisu oznaceni
-	if (id == 110)
+	if (id == IDS_BTN_DELETE)
 	{
 		for (int i = 0; i < 81; i++)
 		{
@@ -300,7 +302,7 @@ void main_window::on_command(int id)
 	}
 	/* ako je kliknut gumb "solve", prazno polje se ispunjava tocnim brojem, te ako je odabrano zadnje polje bilo
 	prazno salje se poruka za kraj igre*/
-	if (id == 111)
+	if (id == IDS_BTN_SOLVE)
 	{
 		int correct_counter = 0;
 		std::string inserted_value = "";
@@ -338,34 +340,36 @@ void main_window::on_command(int id)
 
 		if (correct_counter == 81)
 		{
-			if (MessageBox(hw, "Sudoku solved! Play again?", "You win", MB_YESNO | MB_ICONINFORMATION) == IDYES)
+			if (MessageBox(hw, load_text(IDS_YOU_WIN_MESSAGE).c_str(), load_text(IDS_YOU_WIN_TITLE).c_str(),
+				MB_YESNO | MB_ICONINFORMATION) == IDYES)
 				reset_game(hw);
 			else
 				::PostQuitMessage(0);
 		}
 	}
 	//ako je kliknut gumb "new game", salje se poruka za potvrdu i ako je odabrano "yes" igra se resetira
-	if (id == 113)
+	if (id == IDS_BTN_RESET)
 	{
-		if (MessageBox(hw, "Are you sure you want to start a new game?", "New game", MB_YESNO | MB_ICONINFORMATION) == IDYES)
+		if (MessageBox(hw, load_text(IDS_NEW_GAME_MESSAGE).c_str(), load_text(IDS_NEW_GAME_TITLE).c_str(),
+			MB_YESNO | MB_ICONINFORMATION) == IDYES)
 			reset_game(hw);
 	}
 	//ako je kliknut gumb "notes", ukljucuje ili iskljucuje mogucnost unosa biljeski
-	if (id == 114)
+	if (id == IDS_BTN_NOTES_OFF)
 	{
 		notes_on = !notes_on;
 
 		if (notes_on)
-			SetWindowText(GetDlgItem(hw, 114), "Notes: ON");
+			SetWindowText(GetDlgItem(hw, IDS_BTN_NOTES_OFF), load_text(IDS_BTN_NOTES_ON).c_str());
 		else
-			SetWindowText(GetDlgItem(hw, 114), "Notes: OFF");
+			SetWindowText(GetDlgItem(hw, IDS_BTN_NOTES_OFF), load_text(IDS_BTN_NOTES_OFF).c_str());
 	}
 
-	HWND e_button = GetDlgItem(hw, 200);
-	HWND n_button = GetDlgItem(hw, 201);
-	HWND h_button = GetDlgItem(hw, 202);
+	HWND e_button = GetDlgItem(hw, IDS_BTN_EASY);
+	HWND n_button = GetDlgItem(hw, IDS_BTN_NORMAL);
+	HWND h_button = GetDlgItem(hw, IDS_BTN_HARD);
 
-	if (id == 200)
+	if (id == IDS_BTN_EASY)
 	{
 		rect_drawn = true;
 		InvalidateRect(hw, 0, true);
@@ -376,7 +380,7 @@ void main_window::on_command(int id)
 		ShowWindow(h_button, SW_HIDE);
 
 	}
-	if (id == 201)
+	if (id == IDS_BTN_NORMAL)
 	{
 		rect_drawn = true;
 		InvalidateRect(hw, 0, true);
@@ -386,7 +390,7 @@ void main_window::on_command(int id)
 		ShowWindow(n_button, SW_HIDE);
 		ShowWindow(h_button, SW_HIDE);
 	}
-	if (id == 202)
+	if (id == IDS_BTN_HARD)
 	{
 		rect_drawn = true;
 		InvalidateRect(hw, 0, true);
@@ -464,6 +468,6 @@ int WINAPI WinMain(HINSTANCE hi, HINSTANCE, LPSTR, int)
 {
 	application app;
 	main_window wnd;
-	wnd.create(0, WS_OVERLAPPEDWINDOW | WS_VISIBLE, _T("Sudoku"));
+	wnd.create(0, WS_OVERLAPPEDWINDOW | WS_VISIBLE, load_text(IDS_APP_TITLE).c_str());
 	return app.run();
 }

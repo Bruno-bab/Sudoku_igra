@@ -1,5 +1,6 @@
 #pragma once  
 
+#include "Resource.h"
 #include "Number_generator.h"  
 #include <windows.h>  
 #include <string>  
@@ -24,7 +25,7 @@ private:
    std::string text;  
    std::vector<std::string> note_numbers;  
 public:  
-   sudoku_button(HWND hw, int x, int y, int w, int h, int ID, const std::string& txt) : id(ID), text(txt) // Fixed "string" to "std::string"  
+   sudoku_button(HWND hw, int x, int y, int w, int h, int ID, const std::string& txt) : id(ID), text(txt)
    {  
        hwnd = CreateWindow("BUTTON", "", WS_CHILD | WS_VISIBLE | BS_OWNERDRAW,  
            x, y, 70, 70, hw, HMENU(ID), 0, 0);  
@@ -115,6 +116,8 @@ protected:
     bool notes_on = false;
     bool rect_drawn = false;
 
+    TCHAR w_text[100];
+
     HWND e_button;
     HWND n_button;
     HWND h_button;
@@ -151,4 +154,4 @@ std::vector<std::vector<int>> create_solved_sudoku();
 
 void remove_numbers(std::vector<std::vector<int>>& grid, int k);
 
-void ScaleAndMove(HWND hwnd, int ref_x, int ref_y, int ref_w, int ref_h, int current_w, int current_h, int ref_width, int ref_height);
+std::basic_string<TCHAR> load_text(int id);

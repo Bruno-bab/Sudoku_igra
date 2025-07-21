@@ -33,7 +33,7 @@ bool window::register_class(const tstring& name)
 tstring window::generate_class_name()
 {
 	static int n = 1;
-	return _T("Sudoku") + std::to_string(n++);
+	return load_text(IDS_APP_TITLE).c_str() + std::to_string(n++);
 }
 
 bool window::create(HWND parent, DWORD style, LPCTSTR caption, UINT_PTR id_or_menu,
@@ -140,23 +140,22 @@ void window::game_start(HWND hw, int mode)
 	}
 	//kreiranje gumba za brojeve
 	for (int i = 0; i < 9; i++)
-		number_buttons.emplace_back(hw, 0, 0, 0, 0, 101 + i, std::to_string(i + 1));
+		number_buttons.emplace_back(hw, 0, 0, 0, 0, IDC_BTN_NUMBER + i, std::to_string(i + 1));
 
-	//kreiranje ostalih gumba i statica
-	delete_button = CreateWindow("BUTTON", "Delete", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-		0, 0, 0, 0, hw, HMENU(110), 0, 0);
+	delete_button = CreateWindow("BUTTON", load_text(IDS_BTN_DELETE).c_str(), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+		0, 0, 0, 0, hw, HMENU(IDS_BTN_DELETE), 0, 0);
 
-	solve_button = CreateWindow("BUTTON", "Solve", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-		0, 0, 0, 0, hw, HMENU(111), 0, 0);
+	solve_button = CreateWindow("BUTTON", load_text(IDS_BTN_SOLVE).c_str(), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+		0, 0, 0, 0, hw, HMENU(IDS_BTN_SOLVE), 0, 0);
 
-	reset_button = CreateWindow("BUTTON", "New game", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-		0, 0, 0, 0, hw, HMENU(113), 0, 0);
+	reset_button = CreateWindow("BUTTON", load_text(IDS_BTN_RESET).c_str(), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+		0, 0, 0, 0, hw, HMENU(IDS_BTN_RESET), 0, 0);
 
-	notes_button = CreateWindow("BUTTON", "Notes: OFF", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-		0, 0, 0, 0, hw, HMENU(114), 0, 0);
+	notes_button = CreateWindow("BUTTON", load_text(IDS_BTN_NOTES_OFF).c_str(), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+		0, 0, 0, 0, hw, HMENU(IDS_BTN_NOTES_OFF), 0, 0);
 
-	mistakes_text = CreateWindow("STATIC", ("Number of mistakes: 0/3"), WS_CHILD | WS_VISIBLE | SS_LEFT,
-		1060, 100, 371, 30, hw, HMENU(112), 0, 0);
+	mistakes_text = CreateWindow("STATIC", load_text(IDS_TXT_MISTAKES).c_str(), WS_CHILD | WS_VISIBLE | SS_LEFT,
+		1060, 100, 371, 30, hw, HMENU(IDS_TXT_MISTAKES), 0, 0);
 
 	RECT r;
 	GetClientRect(hw, &r);
@@ -186,7 +185,6 @@ void window::reset_game(HWND hw)
 	notes_on = false;
 	rect_drawn = false;
 
-
 	ShowWindow(e_button, SW_SHOW);
 	ShowWindow(n_button, SW_SHOW);
 	ShowWindow(h_button, SW_SHOW);
@@ -195,16 +193,9 @@ void window::reset_game(HWND hw)
 	UpdateWindow(hw);
 }
 
-void ScaleAndMove(HWND hwnd, int ref_x, int ref_y, int ref_w, int ref_h,
-	int current_w, int current_h, int ref_width, int ref_height)
+std::basic_string<TCHAR> load_text(int id)
 {
-	float scale_x = (float)current_w / ref_width;
-	float scale_y = (float)current_h / ref_height;
-
-	int x = static_cast<int>(ref_x * scale_x);
-	int y = static_cast<int>(ref_y * scale_y);
-	int w = static_cast<int>(ref_w * scale_x);
-	int h = static_cast<int>(ref_h * scale_y);
-
-	MoveWindow(hwnd, x, y, w, h, TRUE);
+    TCHAR text[100];
+    LoadString(GetModuleHandle(NULL), id, text, sizeof(text)/sizeof(TCHAR));
+    return text;  
 }
