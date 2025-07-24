@@ -9,9 +9,9 @@ public:
 	main_window();
 protected:
 	int on_create(CREATESTRUCT* pcs) override;
-	void on_paint(HWND hw) override;
+	void on_paint(HDC hdc) override;
 	void on_command(int id) override;
-	void on_drawitem(LPARAM lp) override;
 	void on_size(int w, int h) override;
+	void on_left_button_down(POINT) override;
 	void on_destroy() override;
 };
