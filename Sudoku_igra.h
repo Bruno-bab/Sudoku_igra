@@ -16,7 +16,9 @@ public:
 };
 
 class sudoku_button  
-{  
+{   
+    friend class window;
+    friend class main_window;
 private:  
    bool entered_number = false;  
    bool clicked_button = false;  
@@ -26,11 +28,6 @@ private:
    std::string text;  
    std::vector<std::string> note_numbers; 
    RECT rect;
-public:  
-    sudoku_button(int ID, const std::string& txt): id(ID), text(txt)
-    {
-        note_numbers = std::vector<std::string>(9, "");
-    }
 
    void setText(std::string txt)  
    {  
@@ -81,6 +78,12 @@ public:
    RECT getRect() const { return rect; }
 
    bool contains(POINT p) { return PtInRect(&rect, p); }
+
+public:
+    sudoku_button(int ID, const std::string& txt) : id(ID), text(txt)
+    {
+        note_numbers = std::vector<std::string>(9, "");
+    }
 };  
 
 class number_button  

@@ -35,7 +35,6 @@ int main_window::on_create(CREATESTRUCT* pcs)
 	return 0;
 }
 
-//crta crnu pozadinu za sudoku polja
 void main_window::on_paint(HDC hdc)
 {	
 	//crtanje okvira sudoku polja
