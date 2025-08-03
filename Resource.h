@@ -34,6 +34,7 @@
 #define IDS_NEW_GAME_TITLE  1004
 #define IDS_NEW_GAME_MESSAGE  1005
 
+#define IDS_GAME_SIZE  81
 
 #define IDC_STATIC                      -1
 
