@@ -27,6 +27,7 @@ private:
 	void paint_sudoku_buttons(HDC hdc);
 	void input_number();
 	void input_note();
+	void game_won(int correct_counter);
 	void number_button_clicked(int id);
 	void delete_button_clicked();
 	void solve_button_clicked();

@@ -1,4 +1,5 @@
 #include "main.h"
+#include <format>
 
 main_window::main_window() {
 	ZeroMemory(&lf, sizeof(lf));
@@ -11,8 +12,8 @@ main_window::main_window() {
 
 void main_window::game_start(int numbers_to_remove)
 {
-	game.solved_sudoku = game.create_solved_sudoku();
-	std::vector<std::vector<int>> unsolved_sudoku = game.solved_sudoku;
+	game.setSolvedSudoku(game.create_solved_sudoku());
+	std::vector<std::vector<int>> unsolved_sudoku = game.getSolvedSudoku();
 	game.remove_numbers(unsolved_sudoku, numbers_to_remove);
 
 	sudoku_buttons.reserve(IDS_GAME_SIZE);
@@ -29,9 +30,8 @@ void main_window::game_start(int numbers_to_remove)
 
 	//kreiranje gumba za brojeve
 	for (int i = 0; i < 9; i++)
-	{
 		number_buttons.emplace_back(hw, IDC_BTN_NUMBER + i, std::to_string(i + 1));
-	}
+	
 
 	create_buttons();
 
@@ -39,22 +39,22 @@ void main_window::game_start(int numbers_to_remove)
 //brise sve gumbe, stavlja vrijednosti na pocetno stanje i resetira igru
 void main_window::reset_game()
 {
-	for (int i = 0; i < sudoku_buttons.size(); i++)
-		DestroyWindow(GetDlgItem(hw, sudoku_buttons[i].getId()));
+	for (auto& b : sudoku_buttons)
+		DestroyWindow(GetDlgItem(hw, b.getId()));
 	sudoku_buttons.clear();
 
-	for (int i = 0; i < 9; i++)
-		DestroyWindow(GetDlgItem(hw, number_buttons[i].getId()));
+	for (auto& b : number_buttons)
+		DestroyWindow(GetDlgItem(hw, b.getId()));
 	number_buttons.clear();
 
-	for (int i = 110; i < 115; i++)
+	for (int i = IDS_BTN_DELETE; i < IDS_BTN_NOTES_OFF + 1; i++)
 		DestroyWindow(GetDlgItem(hw, i));
 
-	game.selected_sudoku_id = -1;
-	game.selected_number_id = -1;
-	game.mistakes = 0;
-	game.notes_on = false;
-	game.rect_drawn = false;
+	game.setSudoku_ID(- 1);
+	game.setNumber_ID(- 1);
+	game.setMistakes(0);
+	game.setNotes_ON(false);
+	game.setRect_Drawn(false);
 
 	ShowWindow(e_button, SW_SHOW);
 	ShowWindow(n_button, SW_SHOW);
@@ -70,7 +70,10 @@ void main_window::create_buttons()
 	solve_button.create(*this, WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, load_text(IDS_BTN_SOLVE).c_str(), IDS_BTN_SOLVE);
 	reset_button.create(*this, WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, load_text(IDS_BTN_RESET).c_str(), IDS_BTN_RESET);
 	notes_button.create(*this, WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON, load_text(IDS_BTN_NOTES_OFF).c_str(), IDS_BTN_NOTES_OFF);
-	mistakes_text.create(*this, WS_CHILD | WS_VISIBLE | SS_LEFT, load_text(IDS_TXT_MISTAKES).c_str(), IDS_TXT_MISTAKES);
+
+	int m = game.getMistakes();
+	std::string text = std::vformat(load_text(IDS_TXT_MISTAKES), std::make_format_args(m));
+	mistakes_text.create(*this, WS_CHILD | WS_VISIBLE | SS_LEFT, text.c_str(), IDS_TXT_MISTAKES);
 }
 void main_window::paint_sudoku_buttons(HDC hdc)
 {
@@ -96,7 +99,7 @@ void main_window::paint_sudoku_buttons(HDC hdc)
 		{
 			font = (HFONT)SelectObject(hdc, button_font);
 
-			if (sudoku_buttons[i].getText() != std::to_string(game.solved_sudoku[i / 9][i % 9]))
+			if (sudoku_buttons[i].getText() != std::to_string(game.getSolvedSudoku()[i / 9][i % 9]))
 				SetTextColor(hdc, RGB(255, 0, 0));
 			else if (sudoku_buttons[i].getEnteredNumber())
 				SetTextColor(hdc, RGB(0, 0, 255));
@@ -126,90 +129,89 @@ void main_window::paint_sudoku_buttons(HDC hdc)
 	ispisuje se poruka o kraju igre, a ako je upisan dobar broj, isticu se sva polja sa istim brojem*/
 void main_window::input_number()
 {
-	std::string number = number_buttons[game.selected_number_id - 101].getText();
-	sudoku_buttons[game.selected_sudoku_id].setText(number);
-	sudoku_buttons[game.selected_sudoku_id].setEnteredNumber(true);
+	std::string number = number_buttons[game.getNumber_ID() - IDC_BTN_NUMBER].getText();
+	sudoku_buttons[game.getSudoku_ID()].setText(number);
+	sudoku_buttons[game.getSudoku_ID()].setEnteredNumber(true);
 
 	for (auto& btn : sudoku_buttons)
 		btn.setNumberHighlighted(false);
 
 	for (int i = 0; i < sudoku_buttons.size(); i++)
 	{
-		if (sudoku_buttons[i].getText() == number && i != game.selected_sudoku_id)
-		{
+		if (sudoku_buttons[i].getText() == number && i != game.getSudoku_ID())
 			sudoku_buttons[i].setNumberHighlighted(true);
-		}
 	}
 
-	if (sudoku_buttons[game.selected_sudoku_id].getText() !=
-		std::to_string(game.solved_sudoku[game.selected_sudoku_id / 9][game.selected_sudoku_id % 9]))
+	if (sudoku_buttons[game.getSudoku_ID()].getText() !=
+		std::to_string(game.getSolvedSudoku()[game.getSudoku_ID() / 9][game.getSudoku_ID() % 9]))
 	{
-		game.mistakes++;
+		game.setMistakes(game.getMistakes() + 1);
 
-		HWND hStatic = GetDlgItem(hw, 112);
-		std::string stext = "Number of mistakes: " + std::to_string(game.mistakes) + "/3";
-		SetWindowText(hStatic, stext.c_str());
+		HWND hStatic = GetDlgItem(hw, IDS_TXT_MISTAKES);
+		int m = game.getMistakes();
+		std::string text = std::vformat(load_text(IDS_TXT_MISTAKES), std::make_format_args(m));
+		SetWindowText(hStatic, text.c_str());
 
-		if (game.mistakes >= 3)
+		if (game.getMistakes() >= 3)
 		{
-			if (MessageBox(hw,
-				window::load_text(IDS_GAME_OVER_MESSAGE).c_str(),
-				window::load_text(IDS_GAME_OVER_TITLE).c_str(),
+			InvalidateRect(hw, 0, true);
+			if (MessageBox(hw, load_text(IDS_GAME_OVER_MESSAGE).c_str(), load_text(IDS_GAME_OVER_TITLE).c_str(),
 				MB_YESNO | MB_ICONERROR) == IDYES)
-			{
 				reset_game();
-				return;
-			}
 			else
-			{
 				::PostQuitMessage(0);
-				return;
-			}
 		}
 	}
 }
 //upisuje brojeve u obliku biljeske
 void main_window::input_note()
 {
-	std::vector<std::string> note_numbers = sudoku_buttons[game.selected_sudoku_id].getNoteNumbers();
-	std::string selected_note_number = number_buttons[game.selected_number_id - 101].getText();
+	std::vector<std::string> note_numbers = sudoku_buttons[game.getSudoku_ID()].getNoteNumbers();
+	std::string selected_note_number = number_buttons[game.getNumber_ID() - IDC_BTN_NUMBER].getText();
 
 	int idx = stoi(selected_note_number) - 1;
 	if (note_numbers[idx] == "")
 		note_numbers[idx] = selected_note_number;
 
-	sudoku_buttons[game.selected_sudoku_id].setNoteNumbers(note_numbers);
-	sudoku_buttons[game.selected_sudoku_id].setText(note_numbers[0] + "      " + note_numbers[1] + "      " + note_numbers[2] + "\n\n"
+	sudoku_buttons[game.getSudoku_ID()].setNoteNumbers(note_numbers);
+	sudoku_buttons[game.getSudoku_ID()].setText(
+		  note_numbers[0] + "      " + note_numbers[1] + "      " + note_numbers[2] + "\n\n"
 		+ note_numbers[3] + "      " + note_numbers[4] + "      " + note_numbers[5] + "\n\n"
 		+ note_numbers[6] + "      " + note_numbers[7] + "      " + note_numbers[8]);
+}
+
+void main_window::game_won(int correct_counter)
+{
+	if (correct_counter == IDS_GAME_SIZE)
+	{
+		InvalidateRect(hw, 0, true);
+		if (MessageBox(hw, load_text(IDS_YOU_WIN_MESSAGE).c_str(), load_text(IDS_YOU_WIN_TITLE).c_str(),
+			MB_YESNO | MB_ICONINFORMATION) == IDYES)
+			reset_game();
+		else
+			::PostQuitMessage(0);
+	}
 }
 /*ako je odabran broj dok su biljeske iskljucene, upisuje se u sudoku polje u obliku broja, a ako su biljeske ukljucene,
 upisuje se u obliku biljeske, takoder, provjerava se da li je korisnik pobjedio*/
 void main_window::number_button_clicked(int id)
 {
-	game.selected_number_id = id;
-	if (game.selected_sudoku_id != -1)
+	game.setNumber_ID(id);
+	if (game.getSudoku_ID() != -1)
 	{
-		if (!game.notes_on && sudoku_buttons[game.selected_sudoku_id].getText() == "")
+		if (!game.getNotes_ON() && sudoku_buttons[game.getSudoku_ID()].getText() == "")
 		{
 			input_number();
 			int correct_counter = 0;
 			for (int i = 0; i < sudoku_buttons.size(); i++)
 			{
-				if (std::to_string(game.solved_sudoku[i / 9][i % 9]) == sudoku_buttons[i].getText())
+				if (std::to_string(game.getSolvedSudoku()[i / 9][i % 9]) == sudoku_buttons[i].getText())
 					correct_counter++;
 			}
 
-			if (correct_counter == IDS_GAME_SIZE)
-			{
-				if (MessageBox(hw, window::load_text(IDS_YOU_WIN_MESSAGE).c_str(),
-					window::load_text(IDS_YOU_WIN_TITLE).c_str(), MB_YESNO | MB_ICONINFORMATION) == IDYES)
-					reset_game();
-				else
-					::PostQuitMessage(0);
-			}
+			game_won(correct_counter);
 		}
-		else
+		else if (game.getNotes_ON() && sudoku_buttons[game.getSudoku_ID()].getText().size() != 1)
 			input_note();
 		InvalidateRect(hw, 0, true);
 	}
@@ -218,18 +220,18 @@ void main_window::number_button_clicked(int id)
 //brisanje unesenog broja ili biljeske i isti brojevi vise nisu oznaceni
 void main_window::delete_button_clicked()
 {
-	for (int i = 0; i < sudoku_buttons.size(); i++)
+	for (auto& b : sudoku_buttons)
 	{
-		sudoku_buttons[i].setNumberHighlighted(false);
+		b.setNumberHighlighted(false);
 
-		if (sudoku_buttons[i].getClickedButton() && sudoku_buttons[i].getEnteredNumber())
-			sudoku_buttons[i].setText("");
+		if (b.getClickedButton() && b.getEnteredNumber())
+			b.setText("");
 
-		if (sudoku_buttons[i].getClickedButton() && sudoku_buttons[i].getText().size() > 1)
+		if (b.getClickedButton() && b.getText().size() > 1)
 		{
 			std::vector<std::string> empty_notes(9, "");
-			sudoku_buttons[i].setNoteNumbers(empty_notes);
-			sudoku_buttons[i].setText("");
+			b.setNoteNumbers(empty_notes);
+			b.setText("");
 		}
 	}
 	InvalidateRect(hw, 0, true);
@@ -248,7 +250,7 @@ void main_window::solve_button_clicked()
 
 		if (sudoku_buttons[i].getClickedButton() && sudoku_buttons[i].getText() == "")
 		{
-			inserted_value = std::to_string(game.solved_sudoku[i / 9][i % 9]);
+			inserted_value = std::to_string(game.getSolvedSudoku()[i / 9][i % 9]);
 			sudoku_buttons[i].setText(inserted_value);
 			sudoku_buttons[i].setEnteredNumber(true);
 		}
@@ -256,12 +258,12 @@ void main_window::solve_button_clicked()
 
 	if (!inserted_value.empty())
 	{
-		for (int i = 0; i < sudoku_buttons.size(); i++)
+		for (auto& b : sudoku_buttons)
 		{
-			if (sudoku_buttons[i].getText() == inserted_value && !sudoku_buttons[i].getClickedButton())
+			if (b.getText() == inserted_value && !b.getClickedButton())
 			{
-				sudoku_buttons[i].setNumberHighlighted(true);
-				HWND button = GetDlgItem(hw, sudoku_buttons[i].getId());
+				b.setNumberHighlighted(true);
+				HWND button = GetDlgItem(hw, b.getId());
 				InvalidateRect(button, 0, true);
 			}
 		}
@@ -269,30 +271,29 @@ void main_window::solve_button_clicked()
 
 	for (int i = 0; i < sudoku_buttons.size(); i++)
 	{
-		if (std::to_string(game.solved_sudoku[i / 9][i % 9]) == sudoku_buttons[i].getText())
+		if (std::to_string(game.getSolvedSudoku()[i / 9][i % 9]) == sudoku_buttons[i].getText())
 			correct_counter++;
 	}
 
-	if (correct_counter == IDS_GAME_SIZE)
-	{
-		if (MessageBox(hw, window::load_text(IDS_YOU_WIN_MESSAGE).c_str(), window::load_text(IDS_YOU_WIN_TITLE).c_str(),
-			MB_YESNO | MB_ICONINFORMATION) == IDYES)
-			reset_game();
-		else
-			::PostQuitMessage(0);
-	}
+	game_won(correct_counter);
 	InvalidateRect(hw, 0, true);
 }
 
 void main_window::difficulty_button_clicked(int difficulty)
 {
-	game.rect_drawn = true;
+	game.setRect_Drawn(true);
 	InvalidateRect(hw, 0, true);
 	game_start(game.create_mode(difficulty));
 
 	ShowWindow(e_button, SW_HIDE);
 	ShowWindow(n_button, SW_HIDE);
 	ShowWindow(h_button, SW_HIDE);
+
+	RECT r;
+	GetClientRect(hw, &r);
+	int w = r.right - r.left;
+	int h = r.bottom - r.top;
+	on_size(w, h);
 }
 
 //mijenja velicinu, poziciju i font gumba ovisno o velicini prozora
@@ -399,7 +400,7 @@ int main_window::on_create(CREATESTRUCT* pcs)
 void main_window::on_paint(HDC hdc)
 {	
 	//crtanje okvira sudoku polja
-	if (game.rect_drawn)
+	if (game.getRect_Drawn())
 	{
 		RECT r;
 		GetClientRect(*this, &r);
@@ -422,10 +423,10 @@ void main_window::on_paint(HDC hdc)
 
 void main_window::on_command(int id)
 {
-	if (id >= 101 && id <= 109)
+	if (id >= IDC_BTN_NUMBER && id <= IDC_BTN_NUMBER + 8)
 		number_button_clicked(id);
 	
-	game.selected_number_id = -1;
+	game.setNumber_ID(- 1);
 	if (id == IDS_BTN_DELETE)
 		delete_button_clicked();
 	
@@ -441,58 +442,40 @@ void main_window::on_command(int id)
 	//ako je kliknut gumb "notes", ukljucuje ili iskljucuje mogucnost unosa biljeski
 	if (id == IDS_BTN_NOTES_OFF)
 	{
-		game.notes_on = !game.notes_on;
+		game.setNotes_ON(!game.getNotes_ON());
 
-		if (game.notes_on)
-			SetWindowText(GetDlgItem(hw, IDS_BTN_NOTES_OFF), load_text(IDS_BTN_NOTES_ON).c_str());
-		else
-			SetWindowText(GetDlgItem(hw, IDS_BTN_NOTES_OFF), load_text(IDS_BTN_NOTES_OFF).c_str());
+		SetWindowText(GetDlgItem(hw, IDS_BTN_NOTES_OFF), load_text(game.getNotes_ON() ?
+			IDS_BTN_NOTES_ON : IDS_BTN_NOTES_OFF).c_str());
 	}
-	RECT r;
-	GetClientRect(hw, &r);
-	int w = r.right - r.left;
-	int h = r.bottom - r.top;
 	if (id == IDS_BTN_EASY)
-	{
 		difficulty_button_clicked(0);
-		on_size(w, h);
-	}
 
 	if (id == IDS_BTN_NORMAL)
-	{
 		difficulty_button_clicked(1);
-		on_size(w, h);
-	}
 
 	if (id == IDS_BTN_HARD)
-	{
 		difficulty_button_clicked(2);
-		on_size(w, h);
-	}
 }
 
 //ako je kliknuto sudoku polje, oznacava se i isticu se druga polja sa istim brojevima
 void main_window::on_left_button_down(POINT p)
 {
-	points.push_back(p);
-
-	for (int i = 0; i < sudoku_buttons.size(); i++)
+	for (auto& b : sudoku_buttons)
 	{
-		sudoku_buttons[i].setNumberHighlighted(false);
-		sudoku_buttons[i].setClickedButton(false);
+		b.setNumberHighlighted(false);
+		b.setClickedButton(false);
 	}
 
 	for (int i = 0; i < sudoku_buttons.size(); i++)
 	{
 		if (sudoku_buttons[i].contains(p))
 		{
-			game.selected_sudoku_id = i;
+			game.setSudoku_ID(i);
 			sudoku_buttons[i].setClickedButton(true);
-			for (int j = 0; j < sudoku_buttons.size(); j++)
+			for (auto& b : sudoku_buttons)
 			{
-				if (!sudoku_buttons[i].getText().empty() &&
-					sudoku_buttons[j].getText() == sudoku_buttons[i].getText())
-					sudoku_buttons[j].setNumberHighlighted(true);
+				if (!sudoku_buttons[i].getText().empty() && b.getText() == sudoku_buttons[i].getText())
+					b.setNumberHighlighted(true);
 			}
 			InvalidateRect(hw, 0, true);
 			break;
@@ -504,9 +487,8 @@ void main_window::on_left_button_down(POINT p)
 void main_window::on_size(int w, int h)
 {
 	int font_h = -MulDiv(h / 25, GetDeviceCaps(GetDC(hw), LOGPIXELSY), 72) / 1.5;
-	int font_w = -MulDiv(w / 25, GetDeviceCaps(GetDC(hw), LOGPIXELSY), 72) / 6;
 
-	HFONT scaled_font = CreateFont(font_h, font_w, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
+	HFONT scaled_font = CreateFont(font_h, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
 		OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, TEXT("Arial"));
 
 	scale_buttons(w, h, scaled_font);

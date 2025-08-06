@@ -19,7 +19,6 @@ public:
 class window
 {
 protected:
-    std::list<POINT> points;
     HWND hw{ 0 };
     virtual tstring class_name();
     bool register_class(const tstring& name);
@@ -97,20 +96,31 @@ public:
 
 class sudoku_game
 {
-    friend class main_window;
 private:
-    std::vector<std::vector<int>> create_solved_sudoku();
-    void remove_numbers(std::vector<std::vector<int>>& grid, int k);
-    int create_mode(int mode);
-
     std::vector<std::vector<int>> solved_sudoku;
     int selected_sudoku_id = -1;
     int selected_number_id = -1;
     int mistakes = 0;
     bool notes_on = false;
     bool rect_drawn = false;
+public:
+    std::vector<std::vector<int>> create_solved_sudoku();
+    void remove_numbers(std::vector<std::vector<int>>& grid, int k);
+    int create_mode(int mode);
 
-    TCHAR w_text[100];
+    std::vector<std::vector<int>> getSolvedSudoku() const { return solved_sudoku; }
+    int getSudoku_ID() const { return selected_sudoku_id; }
+    int getNumber_ID() const { return selected_number_id; }
+    int getMistakes() const { return mistakes; }
+    bool getNotes_ON() const { return notes_on; }
+    bool getRect_Drawn() const { return rect_drawn; }
+
+    void setSolvedSudoku(std::vector<std::vector<int>> ss) { solved_sudoku = ss; }
+    void setSudoku_ID(int ss_id) { selected_sudoku_id = ss_id; }
+    void setNumber_ID(int sn_id) { selected_number_id = sn_id; }
+    void setMistakes(int m) { mistakes = m; }
+    void setNotes_ON(bool n) { notes_on = n; }
+    void setRect_Drawn(bool rd) { rect_drawn = rd; }
 };
 
 
