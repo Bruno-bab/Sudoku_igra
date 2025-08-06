@@ -16,6 +16,8 @@ public:
     int run();
 };
 
+/*window klasa je bazna klasa aplikacije: handlea izradu prozora(koristeci create), koristenje HWND membera i 
+funkcije procedure prozora*/
 class window
 {
 protected:
@@ -94,6 +96,8 @@ public:
     }
 };
 
+/*sudoku_game klasa je bazna klasa "Sudoku" igre: sadrzi sve vazne varijable vezane uz pravila i stanje igre,
+te njihove gettere i settere*/
 class sudoku_game
 {
 private:

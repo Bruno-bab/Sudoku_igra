@@ -6,7 +6,8 @@ class label : public window
 {
 	std::string class_name() override { return "static"; }
 };
-
+/*main_window klasa handlea korisnicko sucelje : vodi brigu o button-ima, static-ima i fontovima,
+povezuje sudoku_game klasu sa suceljem i ostatkom aplikacije*/
 class main_window : public window
 {
 public:
