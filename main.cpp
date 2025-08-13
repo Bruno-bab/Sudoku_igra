@@ -154,7 +154,7 @@ void main_window::input_number()
 
 		if (game.getMistakes() >= 3)
 		{
-			InvalidateRect(hw, 0, true);
+			InvalidateRect(hw, 0, 0);
 			if (MessageBox(hw, load_text(IDS_GAME_OVER_MESSAGE).c_str(), load_text(IDS_GAME_OVER_TITLE).c_str(),
 				MB_YESNO | MB_ICONERROR) == IDYES)
 				reset_game();
@@ -184,7 +184,7 @@ void main_window::game_won(int correct_counter)
 {
 	if (correct_counter == IDS_GAME_SIZE)
 	{
-		InvalidateRect(hw, 0, true);
+		InvalidateRect(hw, 0, 0);
 		if (MessageBox(hw, load_text(IDS_YOU_WIN_MESSAGE).c_str(), load_text(IDS_YOU_WIN_TITLE).c_str(),
 			MB_YESNO | MB_ICONINFORMATION) == IDYES)
 			reset_game();
@@ -213,7 +213,7 @@ void main_window::number_button_clicked(int id)
 		}
 		else if (game.getNotes_ON() && sudoku_buttons[game.getSudoku_ID()].getText().size() != 1)
 			input_note();
-		InvalidateRect(hw, 0, true);
+		InvalidateRect(hw, 0, 0);
 	}
 }
 
@@ -234,7 +234,7 @@ void main_window::delete_button_clicked()
 			b.setText("");
 		}
 	}
-	InvalidateRect(hw, 0, true);
+	InvalidateRect(hw, 0, 0);
 }
 
 /* ako je kliknut gumb "solve", prazno polje se ispunjava tocnim brojem, te ako je odabrano zadnje polje bilo
@@ -264,7 +264,7 @@ void main_window::solve_button_clicked()
 			{
 				b.setNumberHighlighted(true);
 				HWND button = GetDlgItem(hw, b.getId());
-				InvalidateRect(button, 0, true);
+				InvalidateRect(button, 0, 0);
 			}
 		}
 	}
@@ -276,13 +276,13 @@ void main_window::solve_button_clicked()
 	}
 
 	game_won(correct_counter);
-	InvalidateRect(hw, 0, true);
+	InvalidateRect(hw, 0, 0);
 }
 
 void main_window::difficulty_button_clicked(int difficulty)
 {
 	game.setRect_Drawn(true);
-	InvalidateRect(hw, 0, true);
+	InvalidateRect(hw, 0, 0);
 	game_start(game.create_mode(difficulty));
 
 	ShowWindow(e_button, SW_HIDE);
@@ -379,7 +379,7 @@ void main_window::scale_sudoku_rectangles(int w, int h, int cell_size)
 		r.bottom = y + cell_size;
 		sudoku_buttons[i].setRect(r);
 	}
-	InvalidateRect(hw, 0, true);
+	InvalidateRect(hw, 0, 0);
 }
 
 int main_window::on_create(CREATESTRUCT* pcs)
@@ -399,23 +399,48 @@ int main_window::on_create(CREATESTRUCT* pcs)
 
 void main_window::on_paint(HDC hdc)
 {	
-	//crtanje okvira sudoku polja
 	if (game.getRect_Drawn())
 	{
+		//crtanje okvira i ruba sudoku polja
 		RECT r;
 		GetClientRect(*this, &r);
 		RECT topLeft = sudoku_buttons[0].getRect();
 		RECT bottomRight = sudoku_buttons[80].getRect();
 
 		RECT border;
-		border.left = topLeft.left - 8;
-		border.top = topLeft.top - 8;
-		border.right = bottomRight.right + 8;
-		border.bottom = bottomRight.bottom + 8;
+		border.left = topLeft.left;
+		border.top = topLeft.top;
+		border.right = bottomRight.right;
+		border.bottom = bottomRight.bottom;
 
-		HBRUSH brush = CreateSolidBrush(RGB(0, 0, 0));
-		FillRect(hdc, &border, brush);
-		DeleteObject(brush);
+		HPEN pen = CreatePen(PS_SOLID, 4, RGB(0, 0, 0));
+		HPEN oldPen = (HPEN)SelectObject(hdc, pen);
+
+		int y_grid = (border.bottom - border.top) / 3;
+		int x_grid = (border.left - border.right) / 3;
+
+		MoveToEx(hdc, border.left, border.top + y_grid, nullptr);
+		LineTo(hdc, border.right, border.top + y_grid);
+		MoveToEx(hdc, border.left, border.top + y_grid * 2, nullptr);
+		LineTo(hdc, border.right, border.top + y_grid * 2);
+
+		MoveToEx(hdc, border.left - 2, border.top - 2, nullptr);
+		LineTo(hdc, border.right + 2, border.top - 2);
+		MoveToEx(hdc, border.right + 2, border.bottom + 2, nullptr);
+		LineTo(hdc, border.left - 2, border.bottom + 2);
+
+		MoveToEx(hdc, border.right + x_grid, border.top, nullptr);
+		LineTo(hdc, border.right + x_grid, border.bottom);
+		MoveToEx(hdc, border.right + x_grid * 2, border.top, nullptr);
+		LineTo(hdc, border.right + x_grid * 2, border.bottom);
+
+		MoveToEx(hdc, border.right + 2, border.top - 2, nullptr);
+		LineTo(hdc, border.right + 2, border.bottom + 2);
+		MoveToEx(hdc, border.left - 2, border.bottom + 2, nullptr);
+		LineTo(hdc, border.left - 2, border.top - 2);
+
+		SelectObject(hdc, oldPen);
+		DeleteObject(pen);
 	}
 
 	paint_sudoku_buttons(hdc);
@@ -477,7 +502,7 @@ void main_window::on_left_button_down(POINT p)
 				if (!sudoku_buttons[i].getText().empty() && b.getText() == sudoku_buttons[i].getText())
 					b.setNumberHighlighted(true);
 			}
-			InvalidateRect(hw, 0, true);
+			InvalidateRect(hw, 0, 0);
 			break;
 		}
 	}
