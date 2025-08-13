@@ -154,7 +154,7 @@ void main_window::input_number()
 
 		if (game.getMistakes() >= 3)
 		{
-			InvalidateRect(hw, 0, 0);
+			InvalidateRect(hw, 0, false);
 			if (MessageBox(hw, load_text(IDS_GAME_OVER_MESSAGE).c_str(), load_text(IDS_GAME_OVER_TITLE).c_str(),
 				MB_YESNO | MB_ICONERROR) == IDYES)
 				reset_game();
@@ -184,7 +184,7 @@ void main_window::game_won(int correct_counter)
 {
 	if (correct_counter == IDS_GAME_SIZE)
 	{
-		InvalidateRect(hw, 0, 0);
+		InvalidateRect(hw, 0, false);
 		if (MessageBox(hw, load_text(IDS_YOU_WIN_MESSAGE).c_str(), load_text(IDS_YOU_WIN_TITLE).c_str(),
 			MB_YESNO | MB_ICONINFORMATION) == IDYES)
 			reset_game();
@@ -213,7 +213,7 @@ void main_window::number_button_clicked(int id)
 		}
 		else if (game.getNotes_ON() && sudoku_buttons[game.getSudoku_ID()].getText().size() != 1)
 			input_note();
-		InvalidateRect(hw, 0, 0);
+		InvalidateRect(hw, 0, false);
 	}
 }
 
@@ -234,7 +234,7 @@ void main_window::delete_button_clicked()
 			b.setText("");
 		}
 	}
-	InvalidateRect(hw, 0, 0);
+	InvalidateRect(hw, 0, false);
 }
 
 /* ako je kliknut gumb "solve", prazno polje se ispunjava tocnim brojem, te ako je odabrano zadnje polje bilo
@@ -264,7 +264,7 @@ void main_window::solve_button_clicked()
 			{
 				b.setNumberHighlighted(true);
 				HWND button = GetDlgItem(hw, b.getId());
-				InvalidateRect(button, 0, 0);
+				InvalidateRect(button, 0, false);
 			}
 		}
 	}
@@ -276,13 +276,13 @@ void main_window::solve_button_clicked()
 	}
 
 	game_won(correct_counter);
-	InvalidateRect(hw, 0, 0);
+	InvalidateRect(hw, 0, false);
 }
 
 void main_window::difficulty_button_clicked(int difficulty)
 {
 	game.setRect_Drawn(true);
-	InvalidateRect(hw, 0, 0);
+	InvalidateRect(hw, 0, false);
 	game_start(game.create_mode(difficulty));
 
 	ShowWindow(e_button, SW_HIDE);
@@ -379,7 +379,7 @@ void main_window::scale_sudoku_rectangles(int w, int h, int cell_size)
 		r.bottom = y + cell_size;
 		sudoku_buttons[i].setRect(r);
 	}
-	InvalidateRect(hw, 0, 0);
+	InvalidateRect(hw, 0, false);
 }
 
 int main_window::on_create(CREATESTRUCT* pcs)
@@ -502,7 +502,7 @@ void main_window::on_left_button_down(POINT p)
 				if (!sudoku_buttons[i].getText().empty() && b.getText() == sudoku_buttons[i].getText())
 					b.setNumberHighlighted(true);
 			}
-			InvalidateRect(hw, 0, 0);
+			InvalidateRect(hw, 0, false);
 			break;
 		}
 	}
@@ -511,12 +511,15 @@ void main_window::on_left_button_down(POINT p)
 //postavljanje koordinata i velicina gumba, te fontova ovisno o velicini prozora 
 void main_window::on_size(int w, int h)
 {
-	int font_h = -MulDiv(h / 25, GetDeviceCaps(GetDC(hw), LOGPIXELSY), 72) / 1.5;
+	HDC dc = GetDC(hw);
+	int font_h = -MulDiv(h / 25, GetDeviceCaps(dc, LOGPIXELSY), 72) / 1.5;
+	ReleaseDC(hw, dc);
 
 	HFONT scaled_font = CreateFont(font_h, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
 		OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, TEXT("Arial"));
 
 	scale_buttons(w, h, scaled_font);
+	DeleteObject(scaled_font);
 
 	int cell_w = w / 22;
 	int cell_h = h / 11;
