@@ -511,15 +511,17 @@ void main_window::on_left_button_down(POINT p)
 //postavljanje koordinata i velicina gumba, te fontova ovisno o velicini prozora 
 void main_window::on_size(int w, int h)
 {
+	if (scaled_font)
+		DeleteObject(scaled_font);
+
 	HDC dc = GetDC(hw);
 	int font_h = -MulDiv(h / 25, GetDeviceCaps(dc, LOGPIXELSY), 72) / 1.5;
 	ReleaseDC(hw, dc);
 
-	HFONT scaled_font = CreateFont(font_h, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
+	scaled_font = CreateFont(font_h, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
 		OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | FF_DONTCARE, TEXT("Arial"));
 
 	scale_buttons(w, h, scaled_font);
-	DeleteObject(scaled_font);
 
 	int cell_w = w / 22;
 	int cell_h = h / 11;
@@ -544,6 +546,8 @@ void main_window::on_size(int w, int h)
 
 void main_window::on_destroy()
 {
+	if (scaled_font)
+		DeleteObject(scaled_font);
 	::PostQuitMessage(0);
 }
 

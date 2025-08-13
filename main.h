@@ -41,5 +41,5 @@ private:
 	std::vector<number_button> number_buttons;
 	button delete_button, solve_button, reset_button, notes_button, e_button, n_button, h_button;
 	label mistakes_text;
-	HFONT button_font, notes_font;
+	HFONT button_font, notes_font, scaled_font;
 };
